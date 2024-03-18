@@ -41,6 +41,9 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	//Add endpoints to the status-map
 	status["countries_api"] = CheckEndpointStatus(endpoints.Restcountries + "no/")
 	status["currency_api"] = CheckEndpointStatus(endpoints.Currency + "NOK/")
+	//Test: should return statuscode 400
+	//status["countries_api"] = CheckEndpointStatus(endpoints.Restcountries + "!!!!/")
+	//status["currency_api"] = CheckEndpointStatus(endpoints.Currency + "!!!!/")
 
 	//Calculate time since server started
 	uptime := time.Since(startTime).Seconds()
