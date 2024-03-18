@@ -1,4 +1,4 @@
-package countries_dashboard_service
+package handlers
 
 import "net/http"
 
@@ -15,8 +15,8 @@ func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 		registrationRequestDELETE(w, r)
 	default:
 		http.Error(w, "REST method '"+r.Method+"' is not supported. Try"+
-			" '"+http.MethodGet+","+http.MethodPost+", "+http.MethodPut+" "+
-			""+"or"+" "+http.MethodDelete+" ' instead. ", http.StatusNotImplemented)
+			" '"+http.MethodGet+", "+http.MethodPost+", "+http.MethodPut+" "+
+			""+"or"+" "+http.MethodDelete+"' instead. ", http.StatusNotImplemented)
 		return
 	}
 }

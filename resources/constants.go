@@ -1,4 +1,4 @@
-package countries_dashboard_service
+package resources
 
 const DEFAULT_PORT = "8080"
 const REGISTRATIONS_PATH = "/dashboard/v1/registrations/"
