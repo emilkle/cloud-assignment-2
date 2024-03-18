@@ -1,8 +1,8 @@
 package rootpaths
 
 const (
-	REGISTRATION = "/dashboard/v1/registrations/"
-	DASHBOARD    = "/dashboard/v1/dashboards/"
-	NOTIFICATION = "/dashboard/v1/notifications/"
-	STATUS       = "/dashboard/v1/status/"
+	Registrations = "/dashboard/v1/registrations/"
+	Dashboard     = "/dashboard/v1/dashboards/"
+	Notification  = "/dashboard/v1/notifications/"
+	Status        = "/dashboard/v1/status/"
 )

@@ -1,6 +1,8 @@
 package server
 
 import (
+	"countries-dashboard-service/server/handler"
+	"countries-dashboard-service/server/rootpaths"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +18,7 @@ func LaunchServer() {
 	}
 
 	// Set up handler endpoints
-	//http.HandleFunc()
+	http.HandleFunc(rootpaths.Status, handler.StatusHandler)
 
 	fmt.Println("starting server on port " + port + ".")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
