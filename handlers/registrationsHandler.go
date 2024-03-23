@@ -37,14 +37,20 @@ func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	registrationsResponse, err1 := functions.CreateRegistrationsGET(id)
-	if err1 != nil {
-		http.Error(w, "This registration id could not be found.", http.StatusForbidden)
-		return
+	var registrationsResponses []resources.RegistrationsGET
+
+	registrationIds := strings.Split(id, ",")
+	for _, registrationId := range registrationIds {
+		registrationsResponse, err1 := functions.CreateRegistrationsGET(registrationId)
+		if err1 != nil {
+			http.Error(w, "Registration id "+registrationId+" could not be found.", http.StatusNotAcceptable)
+			return
+		}
+		registrationsResponses = append(registrationsResponses, registrationsResponse)
 	}
 
 	// JSON encoding the registrations data.
-	jsonData, err2 := json.Marshal(registrationsResponse)
+	jsonData, err2 := json.Marshal(registrationsResponses)
 	if err2 != nil {
 		http.Error(w, resources.ENCODING_ERROR+"of the registrations data.", http.StatusInternalServerError)
 		return

@@ -3,6 +3,7 @@ package functions
 import (
 	"countries-dashboard-service/database"
 	"countries-dashboard-service/resources"
+	"fmt"
 	"log"
 	"strconv"
 )
@@ -27,8 +28,9 @@ func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) 
 
 	// Check if any documents were found
 	if len(documents) == 0 {
-		log.Printf("No document found with ID: %s", idParam)
-		return resources.RegistrationsGET{}, nil
+		err4 := fmt.Errorf("No document found with ID: %s", idParam)
+		log.Println(err4)
+		return resources.RegistrationsGET{}, err4
 	}
 
 	for _, document := range documents {
