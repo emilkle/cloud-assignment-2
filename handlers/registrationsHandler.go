@@ -1,6 +1,12 @@
 package handlers
 
-import "net/http"
+import (
+	"countries-dashboard-service/functions"
+	"countries-dashboard-service/resources"
+	"encoding/json"
+	"net/http"
+	"strings"
+)
 
 func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
@@ -21,7 +27,36 @@ func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func registrationRequestGET(w http.ResponseWriter, r *http.Request) {}
+func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+
+	urlParts := strings.Split(r.URL.Path, "/")
+	id := urlParts[4]
+	if id == "" {
+		http.Error(w, "Missing id parameter. ", http.StatusBadRequest)
+		return
+	}
+
+	registrationsResponse, err1 := functions.CreateRegistrationsGET(id)
+	if err1 != nil {
+		http.Error(w, "This registration id could not be found.", http.StatusForbidden)
+		return
+	}
+
+	// JSON encoding the registrations data.
+	jsonData, err2 := json.Marshal(registrationsResponse)
+	if err2 != nil {
+		http.Error(w, resources.ENCODING_ERROR+"of the registrations data.", http.StatusInternalServerError)
+		return
+	}
+
+	// Writing the JSON encoded data to the response.
+	_, err3 := w.Write(jsonData)
+	if err3 != nil {
+		http.Error(w, "Error while writing response.", http.StatusInternalServerError)
+		return
+	}
+}
 
 func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 
