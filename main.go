@@ -1,28 +1,30 @@
 package main
 
 import (
-	"cloud.google.com/go/firestore"
-	"context"
+	"countries-dashboard-service/database"
 	"countries-dashboard-service/handlers"
 	"countries-dashboard-service/resources"
 	"log"
 	"net/http"
 	"os"
-
-	firebase "firebase.google.com/go"
-	"google.golang.org/api/option"
 )
 
-// Firebase context and client used by Firestore functions throughout the program.
-var ctx context.Context
-var client *firestore.Client
+//Firebase context and client used by Firestore functions throughout the program.
+//var ctx context.Context
+//var client *firestore.Client
 
 func main() {
-	// Initialize firestore
-	ctx = context.Background()
 
+	// Initialize firestore
+	if err := database.InitializeFirestore(); err != nil {
+		log.Fatalf("Failed to initalize firestore: %v", err)
+	}
+
+	//ctx = context.Background()
+
+	/**
 	// Connection to Firebase
-	opt := option.WithCredentialsFile("./fb_key.json")
+	opt := option.WithCredentialsFile("./database/fb_key.json")
 	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
 		log.Println("error initializing app: %v", err)
@@ -31,6 +33,7 @@ func main() {
 
 	//Initialize client
 	client, err = app.Firestore(ctx)
+	*/
 
 	// This is needed to make render use the correct port set by their environment variables.
 	port := os.Getenv("PORT")
