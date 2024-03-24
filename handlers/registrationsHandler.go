@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"cloud.google.com/go/firestore"
 	"countries-dashboard-service/database"
 	"countries-dashboard-service/functions"
 	"countries-dashboard-service/resources"
@@ -71,25 +72,23 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 
 	var postRegistrationBody resources.RegistrationsPOSTandPUT
 	err1 := json.NewDecoder(r.Body).Decode(&postRegistrationBody)
-	//err1 := json.Unmarshal(content, &postRegistrationBody)
 	if err1 != nil {
 		http.Error(w, resources.DECODING_ERROR+"of the POST request.", http.StatusInternalServerError)
 		return
 	}
 
-	postRegistration := resources.RegistrationsPOSTandPUT{
-		Country: postRegistrationBody.Country,
-		IsoCode: postRegistrationBody.IsoCode,
-		Features: resources.Features{
-			Temperature:      postRegistrationBody.Features.Temperature,
-			Precipitation:    postRegistrationBody.Features.Precipitation,
-			Capital:          postRegistrationBody.Features.Capital,
-			Coordinates:      postRegistrationBody.Features.Coordinates,
-			Population:       postRegistrationBody.Features.Population,
-			Area:             postRegistrationBody.Features.Area,
-			TargetCurrencies: postRegistrationBody.Features.TargetCurrencies,
-		},
-	}
+	postRegistration := map[string]interface{}{
+		"country": postRegistrationBody.Country,
+		"isoCode": postRegistrationBody.IsoCode,
+		"features": map[string]interface{}{
+			"temperature":      postRegistrationBody.Features.Temperature,
+			"precipitation":    postRegistrationBody.Features.Precipitation,
+			"capital":          postRegistrationBody.Features.Capital,
+			"coordinates":      postRegistrationBody.Features.Coordinates,
+			"population":       postRegistrationBody.Features.Population,
+			"area":             postRegistrationBody.Features.Area,
+			"targetCurrencies": postRegistrationBody.Features.TargetCurrencies,
+		}}
 
 	newDocumentRef := client.Collection(resources.REGISTRATIONS_COLLECTION)
 	if newDocumentRef == nil {
@@ -103,16 +102,37 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "An error occurred when creating a new document.", http.StatusInternalServerError)
 		return
 	} else {
-		// Returns document ID in body
 		log.Println("Document added to the registrations collection. " +
 			"Identifier of the added document: " + documentId.ID)
 		//http.Error(w, documentId.ID, http.StatusCreated)
 
-		// TODO add the fields in the POST response to the new document. Like done here:
-		// https://cloud.google.com/firestore/docs/samples/firestore-data-set-nested-fields
 		postResponse, _ := functions.ParsePostResponse(client)
 
 		standardResponseWriter(w, postResponse)
+
+		postResponseMap := make(map[string]interface{})
+		jsonString, err3 := json.Marshal(&postResponse)
+		if err3 != nil {
+			log.Println("Unable to marshal the POST response: ", err3.Error())
+			http.Error(w, resources.ENCODING_ERROR+"of the POST response data.", http.StatusInternalServerError)
+			return
+		}
+		err3 = json.Unmarshal(jsonString, &postResponseMap)
+		if err3 != nil {
+			log.Println("Unable to unmarshal the POST response: ", err3.Error())
+			http.Error(w, resources.DECODING_ERROR+"of the POST response data.", http.StatusInternalServerError)
+			return
+		}
+
+		// Update document with id and lastChange fields.
+		_, err4 := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentId.ID).Set(ctx,
+			postResponseMap, firestore.MergeAll)
+
+		if err4 != nil {
+			log.Println("The id and lastChange fields could not be set: ", err4.Error())
+			http.Error(w, "An error occurred when setting the id and last change"+
+				" timestamp of the new registration, Please try again. ", http.StatusInternalServerError)
+		}
 	}
 }
 

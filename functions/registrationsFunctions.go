@@ -83,9 +83,11 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
-	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).Documents(ctx)
+	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).OrderBy("lastChange", firestore.Asc).Documents(ctx)
 
 	var registrationsResponses []resources.RegistrationsGET
+
+	idIndex := 1
 	for {
 		document, err := iter.Next()
 		if err == iterator.Done {
@@ -95,31 +97,42 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 			return nil, err
 		}
 		data := document.Data()
-		featuresData := data["features"].(map[string]interface{})
 
-		id, ok := data["id"].(int64)
+		// Retrieve the lastChange timestamp from the document
+		lastChange, ok := data["lastChange"].(string)
 		if !ok {
-			err4 := fmt.Errorf("ID %v could not be used.", id)
-			log.Println(err4)
+			log.Printf("The timestamp of the last change"+
+				" %v could not be converted to string.", data["lastChange"])
+			continue
 		}
-		registrationsResponse := resources.RegistrationsGET{
-			Id:      int(id),
-			Country: data["country"].(string),
-			IsoCode: data["isoCode"].(string),
-			Features: resources.Features{
-				Temperature:      featuresData["temperature"].(bool),
-				Precipitation:    featuresData["precipitation"].(bool),
-				Capital:          featuresData["capital"].(bool),
-				Coordinates:      featuresData["coordinates"].(bool),
-				Population:       featuresData["population"].(bool),
-				Area:             featuresData["area"].(bool),
-				TargetCurrencies: getTargetCurrencies(featuresData),
-			},
-			LastChange: data["lastChange"].(string),
-		}
+
+		registrationsResponse := createRegistrationsResponse(data, lastChange, idIndex)
 		registrationsResponses = append(registrationsResponses, registrationsResponse)
+
+		idIndex++
 	}
+
 	return registrationsResponses, nil
+}
+
+func createRegistrationsResponse(data map[string]interface{}, lastChange string, idIndex int) resources.RegistrationsGET {
+	featuresData := data["features"].(map[string]interface{})
+
+	return resources.RegistrationsGET{
+		Id:      idIndex,
+		Country: data["country"].(string),
+		IsoCode: data["isoCode"].(string),
+		Features: resources.Features{
+			Temperature:      featuresData["temperature"].(bool),
+			Precipitation:    featuresData["precipitation"].(bool),
+			Capital:          featuresData["capital"].(bool),
+			Coordinates:      featuresData["coordinates"].(bool),
+			Population:       featuresData["population"].(bool),
+			Area:             featuresData["area"].(bool),
+			TargetCurrencies: getTargetCurrencies(featuresData),
+		},
+		LastChange: lastChange,
+	}
 }
 
 func ParsePostResponse(client *firestore.Client) (resources.RegistrationsPOSTResponse, error) {
@@ -133,7 +146,7 @@ func ParsePostResponse(client *firestore.Client) (resources.RegistrationsPOSTRes
 		return resources.RegistrationsPOSTResponse{}, err
 	}
 
-	var highestID int64
+	var highestId int64
 	idFound := false
 	for _, document := range documents {
 		data := document.Data()
@@ -146,15 +159,15 @@ func ParsePostResponse(client *firestore.Client) (resources.RegistrationsPOSTRes
 			err4 := fmt.Errorf("ID %v could not be used.", id)
 			log.Println(err4)
 		}
-		if id > highestID && id != 0 {
-			highestID = id
+		if id > highestId && id != 0 {
+			highestId = id
 			idFound = true
 		}
 	}
 
 	nextId := 1
-	if idFound && highestID != 0 {
-		nextId = int(highestID + 1)
+	if idFound && highestId != 0 {
+		nextId = int(highestId + 1)
 	}
 
 	return resources.RegistrationsPOSTResponse{
