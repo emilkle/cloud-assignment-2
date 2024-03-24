@@ -30,3 +30,13 @@ type Features struct {
 	Area             bool     `json:"area"`
 	TargetCurrencies []string `json:"targetCurrencies"`
 }
+
+// Struct for the status response body
+type StatusResponse struct {
+	CountriesApi int `json:"countries_api"`
+	MeteoApi     int `json:"meteo_api"`
+	CurrencyApi  int `json:"currency_api"`
+	//add notification_db and webhook
+	Version string  `json:"version"`
+	Uptime  float64 `json:"uptime"`
+}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"countries-dashboard-service/database"
 	"countries-dashboard-service/handlers"
 	"countries-dashboard-service/resources"
 	"log"
@@ -15,10 +14,13 @@ import (
 
 func main() {
 
-	// Initialize firestore
-	if err := database.InitializeFirestore(); err != nil {
-		log.Fatalf("Failed to initalize firestore: %v", err)
-	}
+	/*
+		// Initialize firestore
+		if err := database.InitializeFirestore(); err != nil {
+			log.Fatalf("Failed to initalize firestore: %v", err)
+		}
+
+	*/
 
 	//ctx = context.Background()
 
@@ -47,7 +49,7 @@ func main() {
 	http.HandleFunc(resources.REGISTRATIONS_PATH, handlers.RegistrationsHandler)
 	//http.HandleFunc(DASHBOARDS_PATH, handler.)
 	//http.HandleFunc(NOTIFICATIONS_PATH, handler.)
-	//http.HandleFunc(STATUS_PATH, handler.StatusHandler)
+	http.HandleFunc(resources.STATUS_PATH, handlers.StatusHandler)
 	//handler.StartTimer()
 
 	log.Println("Service is listening on port " + port)
