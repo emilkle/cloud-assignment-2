@@ -1,4 +1,4 @@
-package functions
+package registrations
 
 import (
 	"cloud.google.com/go/firestore"
@@ -8,7 +8,6 @@ import (
 	"google.golang.org/api/iterator"
 	"log"
 	"strconv"
-	"time"
 )
 
 func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) {
@@ -133,45 +132,4 @@ func createRegistrationsResponse(data map[string]interface{}, lastChange string,
 		},
 		LastChange: lastChange,
 	}
-}
-
-func ParsePostResponse(client *firestore.Client) (resources.RegistrationsPOSTResponse, error) {
-	ctx := database.GetFirestoreContext()
-
-	// Creating a query to find the highest existing id field in the Registration collection
-	query := client.Collection(resources.REGISTRATIONS_COLLECTION).OrderBy("id", firestore.Desc).Limit(1)
-	documents, err := query.Documents(ctx).GetAll()
-	if err != nil {
-		log.Println("Failed to fetch documents:", err)
-		return resources.RegistrationsPOSTResponse{}, err
-	}
-
-	var highestId int64
-	idFound := false
-	for _, document := range documents {
-		data := document.Data()
-
-		id, ok := data["id"].(int64)
-		if id == 0 {
-			continue
-		}
-		if !ok {
-			err4 := fmt.Errorf("ID %v could not be used.", id)
-			log.Println(err4)
-		}
-		if id > highestId && id != 0 {
-			highestId = id
-			idFound = true
-		}
-	}
-
-	nextId := 1
-	if idFound && highestId != 0 {
-		nextId = int(highestId + 1)
-	}
-
-	return resources.RegistrationsPOSTResponse{
-		Id:         nextId,
-		LastChange: time.Now().Format("20060102 15:04"),
-	}, nil
 }

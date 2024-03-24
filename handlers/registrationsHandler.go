@@ -3,7 +3,7 @@ package handlers
 import (
 	"cloud.google.com/go/firestore"
 	"countries-dashboard-service/database"
-	"countries-dashboard-service/functions"
+	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"log"
@@ -35,7 +35,7 @@ func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
 	id := urlParts[4]
 
 	if id == "" {
-		registrationsResponses, err1 := functions.GetAllRegisteredDocuments()
+		registrationsResponses, err1 := registrations.GetAllRegisteredDocuments()
 		if err1 != nil {
 			http.Error(w, "Could not retrieve all documents. ", http.StatusInternalServerError)
 			return
@@ -48,7 +48,7 @@ func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
 
 	registrationIds := strings.Split(id, ",")
 	for _, registrationId := range registrationIds {
-		registrationsResponse, err2 := functions.CreateRegistrationsGET(registrationId)
+		registrationsResponse, err2 := registrations.CreateRegistrationsGET(registrationId)
 		if err2 != nil {
 			http.Error(w, "Registration id "+registrationId+" could not be found.", http.StatusNotAcceptable)
 			return
@@ -92,7 +92,7 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 
 	newDocumentRef := client.Collection(resources.REGISTRATIONS_COLLECTION)
 	if newDocumentRef == nil {
-		http.Error(w, "The doccument reference is nil.", http.StatusInternalServerError)
+		http.Error(w, "The document reference is nil.", http.StatusInternalServerError)
 		return
 	}
 
@@ -106,7 +106,7 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 			"Identifier of the added document: " + documentId.ID)
 		//http.Error(w, documentId.ID, http.StatusCreated)
 
-		postResponse, _ := functions.ParsePostResponse(client)
+		postResponse, _ := registrations.CreatePOSTResponse()
 
 		standardResponseWriter(w, postResponse)
 
