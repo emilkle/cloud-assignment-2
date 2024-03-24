@@ -16,6 +16,11 @@ type RegistrationsPOSTandPUT struct {
 	Features Features `json:"features"`
 }
 
+type RegistrationsPOSTResponse struct {
+	Id         int    `json:"id"`
+	LastChange string `json:"lastChange"`
+}
+
 type Features struct {
 	Temperature      bool     `json:"temperature"`
 	Precipitation    bool     `json:"precipitation"`
