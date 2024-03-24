@@ -1,31 +1,15 @@
 package handlers
 
 import (
+	"countries-dashboard-service/functions"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 )
 
 var startTime = time.Now()
-
-func CheckEndpointStatus(url string) int {
-	statusResponse, err := http.Get(url)
-	if err != nil {
-		return http.StatusServiceUnavailable
-	}
-	defer func(Body io.ReadCloser) {
-		if err != nil {
-			err := Body.Close()
-			if err != nil {
-				fmt.Printf("failed to close response body from endpoint: %s, during status check. %v", url, err)
-			}
-		}
-	}(statusResponse.Body)
-	return statusResponse.StatusCode
-}
 
 // StatusHandler checks the status of endpoints
 func StatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,9 +23,9 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	status := make(map[string]int)
 
 	//Add endpoints to the status-map
-	status["countries_api"] = CheckEndpointStatus(resources.REST_COUNTRIES_PATH + "/alpha/no/")
-	status["currency_api"] = CheckEndpointStatus(resources.CURRENCY_PATH + "NOK/")
-	status["meteo_api"] = CheckEndpointStatus(resources.OPEN_METEO_PATH)
+	status["countries_api"] = functions.CheckEndpointStatus(resources.REST_COUNTRIES_PATH + "/alpha/no/")
+	status["currency_api"] = functions.CheckEndpointStatus(resources.CURRENCY_PATH + "NOK/")
+	status["meteo_api"] = functions.CheckEndpointStatus(resources.OPEN_METEO_PATH)
 
 	//Calculate time since server started
 	uptime := time.Since(startTime).Seconds()
