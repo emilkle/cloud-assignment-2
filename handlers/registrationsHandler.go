@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"cloud.google.com/go/firestore"
 	"countries-dashboard-service/database"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -30,6 +30,9 @@ func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// It is possible to get more documents at once by calling /dashboard/v1/registrations/1,2,3 for
+// getting specific entries in specific orders, or by
+// using /dashboard/v1/registrations/ to get all documents.
 func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
 	urlParts := strings.Split(r.URL.Path, "/")
 	id := urlParts[4]
@@ -45,16 +48,23 @@ func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var registrationsResponses []resources.RegistrationsGET
+	var notFoundIds []string
 
 	registrationIds := strings.Split(id, ",")
 	for _, registrationId := range registrationIds {
 		registrationsResponse, err2 := registrations.CreateRegistrationsGET(registrationId)
 		if err2 != nil {
-			http.Error(w, "Registration id "+registrationId+" could not be found.", http.StatusNotAcceptable)
-			return
+			notFoundIds = append(notFoundIds, registrationId)
 		}
 		registrationsResponses = append(registrationsResponses, registrationsResponse)
 	}
+
+	if len(notFoundIds) > 0 {
+		http.Error(w, "Registration id(s) "+strings.Join(notFoundIds, ", ")+
+			" could not be found.", http.StatusNotFound)
+		return
+	}
+
 	standardResponseWriter(w, registrationsResponses)
 }
 
@@ -77,63 +87,18 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postRegistration := map[string]interface{}{
-		"country": postRegistrationBody.Country,
-		"isoCode": postRegistrationBody.IsoCode,
-		"features": map[string]interface{}{
-			"temperature":      postRegistrationBody.Features.Temperature,
-			"precipitation":    postRegistrationBody.Features.Precipitation,
-			"capital":          postRegistrationBody.Features.Capital,
-			"coordinates":      postRegistrationBody.Features.Coordinates,
-			"population":       postRegistrationBody.Features.Population,
-			"area":             postRegistrationBody.Features.Area,
-			"targetCurrencies": postRegistrationBody.Features.TargetCurrencies,
-		}}
-
-	newDocumentRef := client.Collection(resources.REGISTRATIONS_COLLECTION)
-	if newDocumentRef == nil {
-		http.Error(w, "The document reference is nil.", http.StatusInternalServerError)
-		return
-	}
-
-	documentId, _, err2 := newDocumentRef.Add(ctx, postRegistration)
+	documentID, err2 := registrations.CreatePOSTRequest(ctx, client, w, postRegistrationBody)
 	if err2 != nil {
-		log.Println("An error occurred when creating a new document:", err2.Error())
-		http.Error(w, "An error occurred when creating a new document.", http.StatusInternalServerError)
+		http.Error(w, "Error when creating a new document", http.StatusInternalServerError)
 		return
-	} else {
-		log.Println("Document added to the registrations collection. " +
-			"Identifier of the added document: " + documentId.ID)
-		//http.Error(w, documentId.ID, http.StatusCreated)
-
-		postResponse, _ := registrations.CreatePOSTResponse()
-
-		standardResponseWriter(w, postResponse)
-
-		postResponseMap := make(map[string]interface{})
-		jsonString, err3 := json.Marshal(&postResponse)
-		if err3 != nil {
-			log.Println("Unable to marshal the POST response: ", err3.Error())
-			http.Error(w, resources.ENCODING_ERROR+"of the POST response data.", http.StatusInternalServerError)
-			return
-		}
-		err3 = json.Unmarshal(jsonString, &postResponseMap)
-		if err3 != nil {
-			log.Println("Unable to unmarshal the POST response: ", err3.Error())
-			http.Error(w, resources.DECODING_ERROR+"of the POST response data.", http.StatusInternalServerError)
-			return
-		}
-
-		// Update document with id and lastChange fields.
-		_, err4 := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentId.ID).Set(ctx,
-			postResponseMap, firestore.MergeAll)
-
-		if err4 != nil {
-			log.Println("The id and lastChange fields could not be set: ", err4.Error())
-			http.Error(w, "An error occurred when setting the id and last change"+
-				" timestamp of the new registration, Please try again. ", http.StatusInternalServerError)
-		}
 	}
+
+	postResponse, _ := registrations.CreatePOSTResponse()
+	w.WriteHeader(http.StatusCreated)
+
+	standardResponseWriter(w, postResponse)
+
+	registrations.UpdatePOSTRequest(ctx, client, w, documentID, postResponse)
 }
 
 func registrationRequestPUT(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +106,31 @@ func registrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 }
 
 func registrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
+	client := database.GetFirestoreClient()
+	ctx := database.GetFirestoreContext()
 
+	urlParts := strings.Split(r.URL.Path, "/")
+	id := urlParts[4]
+
+	registrationIds := strings.Split(id, ",")
+	for _, registrationId := range registrationIds {
+		allDocuments, _ := registrations.GetAllRegisteredDocuments()
+		for _, document := range allDocuments {
+
+			requestedIdInt, err1 := strconv.Atoi(registrationId)
+			if err1 != nil {
+				log.Println("Registration id "+registrationId+" could not be found.", err1.Error())
+				http.Error(w, "Registration id "+registrationId+" could not be parsed, please use "+
+					"an integer number.",
+					http.StatusNotAcceptable)
+				return
+			}
+
+			if document.Id == requestedIdInt {
+				registrations.DeleteDocumentWithRequestedId(ctx, client, w, requestedIdInt)
+			}
+		}
+	}
 }
 
 func standardResponseWriter(w http.ResponseWriter, response any) {
