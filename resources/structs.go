@@ -31,7 +31,7 @@ type Features struct {
 	TargetCurrencies []string `json:"targetCurrencies"`
 }
 
-// Struct for the status response body
+// StatusResponse struct for the status response body
 type StatusResponse struct {
 	CountriesApi int `json:"countries_api"`
 	MeteoApi     int `json:"meteo_api"`
@@ -39,4 +39,12 @@ type StatusResponse struct {
 	//add notification_db and webhook
 	Version string  `json:"version"`
 	Uptime  float64 `json:"uptime"`
+}
+
+// DashboardsGet Struct to display a dashboard and the last time it was retrieved
+type DashboardsGet struct {
+	Country       string   `json:"country"`
+	IsoCode       string   `json:"isoCode"`
+	Features      Features `json:"features"`
+	LastRetrieval string   `json:"last_retrieval"`
 }
