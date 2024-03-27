@@ -45,9 +45,9 @@ func main() {
 
 	// Initializes the handlers for the different endpoints that the API uses
 	http.HandleFunc(resources.REGISTRATIONS_PATH, handlers.RegistrationsHandler)
-	//http.HandleFunc(DASHBOARDS_PATH, handler.)
+	http.HandleFunc(resources.DASHBOARDS_PATH, handlers.DashboardsHandler)
 	//http.HandleFunc(NOTIFICATIONS_PATH, handler.)
-	//http.HandleFunc(STATUS_PATH, handler.StatusHandler)
+	http.HandleFunc(resources.STATUS_PATH, handlers.StatusHandler)
 	//handler.StartTimer()
 
 	log.Println("Service is listening on port " + port)
