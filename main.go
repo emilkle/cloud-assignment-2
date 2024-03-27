@@ -1,6 +1,7 @@
 package main
 
 import (
+	"countries-dashboard-service/database"
 	"countries-dashboard-service/handlers"
 	"countries-dashboard-service/resources"
 	"log"
@@ -14,13 +15,10 @@ import (
 
 func main() {
 
-	/*
-		// Initialize firestore
-		if err := database.InitializeFirestore(); err != nil {
-			log.Fatalf("Failed to initalize firestore: %v", err)
-		}
-
-	*/
+	// Initialize firestore
+	if err := database.InitializeFirestore(); err != nil {
+		log.Fatalf("Failed to initalize firestore: %v", err)
+	}
 
 	//ctx = context.Background()
 
@@ -47,7 +45,7 @@ func main() {
 
 	// Initializes the handlers for the different endpoints that the API uses
 	http.HandleFunc(resources.REGISTRATIONS_PATH, handlers.RegistrationsHandler)
-	//http.HandleFunc(DASHBOARDS_PATH, handler.)
+	http.HandleFunc(resources.DASHBOARDS_PATH, handlers.DashboardsHandler)
 	//http.HandleFunc(NOTIFICATIONS_PATH, handler.)
 	http.HandleFunc(resources.STATUS_PATH, handlers.StatusHandler)
 	//handler.StartTimer()
