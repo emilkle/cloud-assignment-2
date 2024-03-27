@@ -48,7 +48,7 @@ func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) 
 				Coordinates:      featuresData["coordinates"].(bool),
 				Population:       featuresData["population"].(bool),
 				Area:             featuresData["area"].(bool),
-				TargetCurrencies: getTargetCurrencies(featuresData),
+				TargetCurrencies: GetTargetCurrencies(featuresData),
 			},
 			LastChange: data["lastChange"].(string),
 		}, nil
@@ -57,7 +57,7 @@ func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) 
 	return resources.RegistrationsGET{}, nil
 }
 
-func getTargetCurrencies(featuresData map[string]interface{}) []string {
+func GetTargetCurrencies(featuresData map[string]interface{}) []string {
 	targetCurrenciesInterface, ok := featuresData["targetCurrencies"].([]interface{})
 	if !ok {
 		// TargetCurrencies is not an array of interfaces
@@ -128,7 +128,7 @@ func createRegistrationsResponse(data map[string]interface{}, lastChange string,
 			Coordinates:      featuresData["coordinates"].(bool),
 			Population:       featuresData["population"].(bool),
 			Area:             featuresData["area"].(bool),
-			TargetCurrencies: getTargetCurrencies(featuresData),
+			TargetCurrencies: GetTargetCurrencies(featuresData),
 		},
 		LastChange: lastChange,
 	}

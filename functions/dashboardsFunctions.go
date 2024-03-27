@@ -2,6 +2,7 @@ package functions
 
 import (
 	"countries-dashboard-service/database"
+	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
 	"fmt"
 	"log"
@@ -54,7 +55,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 			Coordinates:      featuresData["coordinates"].(bool),
 			Population:       featuresData["population"].(bool),
 			Area:             featuresData["area"].(bool),
-			TargetCurrencies: getTargetCurrencies(featuresData),
+			TargetCurrencies: registrations.GetTargetCurrencies(featuresData),
 		},
 		LastRetrieval: lastRetrieved,
 	}, nil
