@@ -1,4 +1,4 @@
-package functions
+package registrations
 
 import (
 	"cloud.google.com/go/firestore"
@@ -8,7 +8,6 @@ import (
 	"google.golang.org/api/iterator"
 	"log"
 	"strconv"
-	"time"
 )
 
 func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) {
@@ -83,9 +82,11 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
-	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).Documents(ctx)
+	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).OrderBy("lastChange", firestore.Asc).Documents(ctx)
 
 	var registrationsResponses []resources.RegistrationsGET
+
+	idIndex := 1
 	for {
 		document, err := iter.Next()
 		if err == iterator.Done {
@@ -95,70 +96,40 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 			return nil, err
 		}
 		data := document.Data()
-		featuresData := data["features"].(map[string]interface{})
 
-		id, ok := data["id"].(int64)
+		// Retrieve the lastChange timestamp from the document
+		lastChange, ok := data["lastChange"].(string)
 		if !ok {
-			err4 := fmt.Errorf("ID %v could not be used.", id)
-			log.Println(err4)
+			log.Printf("The timestamp of the last change"+
+				" %v could not be converted to string.", data["lastChange"])
+			continue
 		}
-		registrationsResponse := resources.RegistrationsGET{
-			Id:      int(id),
-			Country: data["country"].(string),
-			IsoCode: data["isoCode"].(string),
-			Features: resources.Features{
-				Temperature:      featuresData["temperature"].(bool),
-				Precipitation:    featuresData["precipitation"].(bool),
-				Capital:          featuresData["capital"].(bool),
-				Coordinates:      featuresData["coordinates"].(bool),
-				Population:       featuresData["population"].(bool),
-				Area:             featuresData["area"].(bool),
-				TargetCurrencies: getTargetCurrencies(featuresData),
-			},
-			LastChange: data["lastChange"].(string),
-		}
+
+		registrationsResponse := createRegistrationsResponse(data, lastChange, idIndex)
 		registrationsResponses = append(registrationsResponses, registrationsResponse)
+
+		idIndex++
 	}
+
 	return registrationsResponses, nil
 }
 
-func ParsePostResponse(client *firestore.Client) (resources.RegistrationsPOSTResponse, error) {
-	ctx := database.GetFirestoreContext()
+func createRegistrationsResponse(data map[string]interface{}, lastChange string, idIndex int) resources.RegistrationsGET {
+	featuresData := data["features"].(map[string]interface{})
 
-	// Creating a query to find the highest existing id field in the Registration collection
-	query := client.Collection(resources.REGISTRATIONS_COLLECTION).OrderBy("id", firestore.Desc).Limit(1)
-	documents, err := query.Documents(ctx).GetAll()
-	if err != nil {
-		log.Println("Failed to fetch documents:", err)
-		return resources.RegistrationsPOSTResponse{}, err
+	return resources.RegistrationsGET{
+		Id:      idIndex,
+		Country: data["country"].(string),
+		IsoCode: data["isoCode"].(string),
+		Features: resources.Features{
+			Temperature:      featuresData["temperature"].(bool),
+			Precipitation:    featuresData["precipitation"].(bool),
+			Capital:          featuresData["capital"].(bool),
+			Coordinates:      featuresData["coordinates"].(bool),
+			Population:       featuresData["population"].(bool),
+			Area:             featuresData["area"].(bool),
+			TargetCurrencies: getTargetCurrencies(featuresData),
+		},
+		LastChange: lastChange,
 	}
-
-	var highestID int64
-	idFound := false
-	for _, document := range documents {
-		data := document.Data()
-
-		id, ok := data["id"].(int64)
-		if id == 0 {
-			continue
-		}
-		if !ok {
-			err4 := fmt.Errorf("ID %v could not be used.", id)
-			log.Println(err4)
-		}
-		if id > highestID && id != 0 {
-			highestID = id
-			idFound = true
-		}
-	}
-
-	nextId := 1
-	if idFound && highestID != 0 {
-		nextId = int(highestID + 1)
-	}
-
-	return resources.RegistrationsPOSTResponse{
-		Id:         nextId,
-		LastChange: time.Now().Format("20060102 15:04"),
-	}, nil
 }
