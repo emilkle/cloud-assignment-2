@@ -2,6 +2,7 @@ package registrations
 
 import (
 	"cloud.google.com/go/firestore"
+	"context"
 	"countries-dashboard-service/database"
 	"countries-dashboard-service/resources"
 	"fmt"
@@ -14,23 +15,23 @@ func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) 
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
-	idNumber, err2 := strconv.Atoi(idParam)
-	if err2 != nil {
-		log.Println("This id could not be parsed, try another id.", err2.Error())
-		return resources.RegistrationsGET{}, err2
+	idNumber, err1 := strconv.Atoi(idParam)
+	if err1 != nil {
+		log.Println("This id could not be parsed, try another id.", err1.Error())
+		return resources.RegistrationsGET{}, err1
 	}
 	query := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==", idNumber).Limit(1)
-	documents, err := query.Documents(ctx).GetAll()
-	if err != nil {
-		log.Println("Failed to fetch documents:", err)
-		return resources.RegistrationsGET{}, err
+	documents, err2 := query.Documents(ctx).GetAll()
+	if err2 != nil {
+		log.Println("Failed to fetch documents:", err2)
+		return resources.RegistrationsGET{}, err2
 	}
 
 	// Check if any documents were found
 	if len(documents) == 0 {
-		err4 := fmt.Errorf("No document found with ID: %s", idParam)
-		log.Println(err4)
-		return resources.RegistrationsGET{}, err4
+		err3 := fmt.Errorf("No document found with ID: %s", idParam)
+		log.Println(err3)
+		return resources.RegistrationsGET{}, err3
 	}
 
 	for _, document := range documents {
@@ -88,12 +89,12 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 
 	idIndex := 1
 	for {
-		document, err := iter.Next()
-		if err == iterator.Done {
+		document, err1 := iter.Next()
+		if err1 == iterator.Done {
 			break
 		}
-		if err != nil {
-			return nil, err
+		if err1 != nil {
+			return nil, err1
 		}
 		data := document.Data()
 
@@ -106,6 +107,13 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 		}
 
 		registrationsResponse := createRegistrationsResponse(data, lastChange, idIndex)
+
+		registrationID := document.Ref.ID
+
+		// Update all the id fields in for the Firestore documents after deleting a document in the middle of the
+		// ascending order, to ensure that all registration documents will be found.
+		updateId(ctx, client, registrationID, registrationsResponse)
+
 		registrationsResponses = append(registrationsResponses, registrationsResponse)
 
 		idIndex++
@@ -131,5 +139,17 @@ func createRegistrationsResponse(data map[string]interface{}, lastChange string,
 			TargetCurrencies: GetTargetCurrencies(featuresData),
 		},
 		LastChange: lastChange,
+	}
+}
+
+func updateId(ctx context.Context, client *firestore.Client,
+	documentID string, getResponse resources.RegistrationsGET) {
+
+	// Update the document's id field.
+	_, err := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentID).Set(ctx,
+		map[string]interface{}{"id": getResponse.Id}, firestore.MergeAll)
+
+	if err != nil {
+		log.Println("The id field could not be set: ", err.Error())
 	}
 }
