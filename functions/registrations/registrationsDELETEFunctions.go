@@ -6,36 +6,47 @@ import (
 	"countries-dashboard-service/resources"
 	"google.golang.org/api/iterator"
 	"log"
-	"net/http"
 	"strconv"
 )
 
-func DeleteDocumentWithRequestedId(ctx context.Context, client *firestore.Client, w http.ResponseWriter,
-	requestedId int) {
+func DeleteDocumentWithRequestedId(ctx context.Context, client *firestore.Client,
+	requestedIds []string) []string {
 
-	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==",
-		requestedId).Documents(ctx)
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
+	var notFoundIds []string
+	for _, requestedId := range requestedIds {
+		requestedIdInt, err := strconv.Atoi(requestedId)
 		if err != nil {
-			log.Fatalf("Error iterating over query results: %v", err)
+			log.Println("Registration id " + requestedId + " could not be parsed: " + err.Error())
+			continue
 		}
 
-		// Retrieve the DocumentRef for the document
-		documentToDelete := doc.Ref
+		found := false
+		iter := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==",
+			requestedIdInt).Documents(ctx)
 
-		_, err2 := client.Collection(resources.REGISTRATIONS_COLLECTION).
-			Doc(documentToDelete.ID).Delete(ctx)
-		if err2 != nil {
-			log.Println("Error when deleting the given document. ", err2)
-			http.Error(w, "Error when deleting the given document. ", http.StatusForbidden)
+		for {
+			document, err1 := iter.Next()
+			if err1 == iterator.Done {
+				break
+			}
+			if err1 != nil {
+				log.Fatalf("Error iterating over query results: %v", err1)
+				continue
+			}
+
+			found = true
+			documentToDelete := document.Ref.ID
+
+			_, err2 := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentToDelete).Delete(ctx)
+			if err2 != nil {
+				log.Println("An error occurred when deleting the given document. ", err2)
+				continue
+			}
 		}
 
+		if !found {
+			notFoundIds = append(notFoundIds, requestedId)
+		}
 	}
-	log.Println("The document(s) with ID(s) " + strconv.Itoa(requestedId) + " was successfully deleted.")
-	http.Error(w, "The document(s) with ID(s) "+strconv.Itoa(requestedId)+
-		" was successfully deleted.", http.StatusNoContent)
+	return notFoundIds
 }

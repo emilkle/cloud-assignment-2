@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -112,25 +111,26 @@ func registrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
 	urlParts := strings.Split(r.URL.Path, "/")
 	id := urlParts[4]
 
-	registrationIds := strings.Split(id, ",")
-	for _, registrationId := range registrationIds {
-		allDocuments, _ := registrations.GetAllRegisteredDocuments()
-		for _, document := range allDocuments {
-
-			requestedIdInt, err1 := strconv.Atoi(registrationId)
-			if err1 != nil {
-				log.Println("Registration id "+registrationId+" could not be found.", err1.Error())
-				http.Error(w, "Registration id "+registrationId+" could not be parsed, please use "+
-					"an integer number.",
-					http.StatusNotAcceptable)
-				return
-			}
-
-			if document.Id == requestedIdInt {
-				registrations.DeleteDocumentWithRequestedId(ctx, client, w, requestedIdInt)
-			}
-		}
+	if id == "" {
+		log.Println("No id(s) were specified in this query.")
+		http.Error(w, "No id(s) were specified in this query, please write an "+
+			"integer number in the query to use this service.", http.StatusBadRequest)
+		return
 	}
+
+	registrationIds := strings.Split(id, ",")
+	notFoundIds := registrations.DeleteDocumentWithRequestedId(ctx, client, registrationIds)
+
+	if len(notFoundIds) > 0 {
+		log.Println("The document(s) with ID(s) " + strings.Join(notFoundIds, ", ") + " were not found.")
+		http.Error(w, "The document(s) with ID(s) "+strings.Join(notFoundIds, ", ")+" were not found.",
+			http.StatusNotFound)
+		return
+	}
+
+	log.Println("The requested documents were successfully deleted from the database.")
+	http.Error(w, "The requested documents were successfully deleted "+
+		"from the database.", http.StatusNoContent)
 }
 
 func standardResponseWriter(w http.ResponseWriter, response any) {
