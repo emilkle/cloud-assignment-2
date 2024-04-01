@@ -1,7 +1,8 @@
 package resources
 
-// Regitrations structs
+// Registrations endpoint structs
 
+// RegistrationsGET struct for the HTTP GET request's response body.
 type RegistrationsGET struct {
 	Id         int      `json:"id"`
 	Country    string   `json:"country"`
@@ -10,17 +11,20 @@ type RegistrationsGET struct {
 	LastChange string   `json:"lastChange"`
 }
 
+// RegistrationsPOSTandPUT struct for HTTP POST and PUT requests.
 type RegistrationsPOSTandPUT struct {
 	Country  string   `json:"country"`
 	IsoCode  string   `json:"isoCode"`
 	Features Features `json:"features"`
 }
 
+// RegistrationsPOSTResponse struct for the HTTP POST request's response body.
 type RegistrationsPOSTResponse struct {
 	Id         int    `json:"id"`
 	LastChange string `json:"lastChange"`
 }
 
+// Features struct for the features contained in each registration document.
 type Features struct {
 	Temperature      bool     `json:"temperature"`
 	Precipitation    bool     `json:"precipitation"`
@@ -30,6 +34,8 @@ type Features struct {
 	Area             bool     `json:"area"`
 	TargetCurrencies []string `json:"targetCurrencies"`
 }
+
+// Status endpoint structs
 
 // StatusResponse struct for the status response body
 type StatusResponse struct {
