@@ -39,7 +39,7 @@ func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
 	if id == "" {
 		registrationsResponses, err1 := registrations.GetAllRegisteredDocuments()
 		if err1 != nil {
-			http.Error(w, "Could not retrieve all documents. ", http.StatusInternalServerError)
+			http.Error(w, "Could not retrieve all documents.", http.StatusInternalServerError)
 			return
 		}
 		standardResponseWriter(w, registrationsResponses)
@@ -88,7 +88,7 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 
 	documentID, err2 := registrations.CreatePOSTRequest(ctx, client, w, postRegistrationBody)
 	if err2 != nil {
-		http.Error(w, "Error when creating a new document", http.StatusInternalServerError)
+		http.Error(w, "Error when creating a new document.", http.StatusInternalServerError)
 		return
 	}
 
@@ -101,7 +101,36 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func registrationRequestPUT(w http.ResponseWriter, r *http.Request) {
+	client := database.GetFirestoreClient()
+	ctx := database.GetFirestoreContext()
 
+	urlParts := strings.Split(r.URL.Path, "/")
+	id := urlParts[4]
+
+	if id == "" {
+		log.Println("No id was specified in this query.")
+		http.Error(w, "No id was specified in this query, please write an "+
+			"integer number in the query to use this service.", http.StatusBadRequest)
+		return
+	}
+
+	var putRegistrationBody resources.RegistrationsPOSTandPUT
+	err1 := json.NewDecoder(r.Body).Decode(&putRegistrationBody)
+	if err1 != nil {
+		http.Error(w, resources.DECODING_ERROR+"of the PUT request.", http.StatusInternalServerError)
+		return
+	}
+
+	documentID, err2 := registrations.GetDocumentID(ctx, client, id)
+	if err2 != nil {
+		http.Error(w, "Error when updating the field(s) of the given document.", http.StatusInternalServerError)
+		return
+	}
+
+	registrations.CreatePUTRequest(ctx, client, w, putRegistrationBody, documentID)
+
+	log.Println("The requested document was successfully updated.")
+	w.WriteHeader(http.StatusOK)
 }
 
 func registrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
