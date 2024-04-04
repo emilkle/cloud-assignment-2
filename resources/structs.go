@@ -54,3 +54,34 @@ type DashboardsGet struct {
 	Features      Features `json:"features"`
 	LastRetrieval string   `json:"last_retrieval"`
 }
+
+// Notification endpoint structs
+
+// WebhookPOST struct for POST request
+type WebhookPOST struct {
+	URL     string `json:"url"`
+	IsoCode string `json:"country"`
+	Event   string `json:"event"`
+}
+
+// WebhookPOSTResponse struct for POST response
+type WebhookPOSTResponse struct {
+	ID         string `json:"ID"`
+	LastChange string `json:"LastChange"`
+}
+
+// ViewWebhook struct for view specific webhook GET response
+type ViewWebhook struct {
+	ID      string `json:"ID"`
+	URL     string `json:"URL"`
+	Country string `json:"Country"`
+	Event   string `json:"Event"`
+}
+
+// EventData struct for webhook invocation
+type EventData struct {
+	ID      string `json:"ID"`
+	Country string `json:"Country"`
+	Event   string `json:"Event"`
+	Time    string `json:"Time"`
+}
