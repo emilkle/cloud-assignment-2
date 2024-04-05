@@ -16,3 +16,18 @@ const ENCODING_ERROR = "Error during JSON encoding "
 
 // Firestore collections
 const REGISTRATIONS_COLLECTION = "Registrations"
+
+// Example structs
+const JSON_STRUCT_POST_AND_PUT = `{
+	   "country": "Norway",                                     
+	   "isoCode": "NO",                                        
+	   "features": {
+	                  "temperature": true,                      
+	                  "precipitation": true,                    
+	                  "capital": true,                          
+	                  "coordinates": true,                      
+	                  "population": true,                       
+	                  "area": true,                             
+	                  "targetCurrencies": ["EUR", "USD", "SEK"] 
+	               }
+}`
