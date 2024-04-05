@@ -106,13 +106,13 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 			continue
 		}
 
-		registrationsResponse := createRegistrationsResponse(data, lastChange, idIndex)
+		registrationsResponse := CreateRegistrationsResponse(data, lastChange, idIndex)
 
 		registrationID := document.Ref.ID
 
 		// Update all the id fields in for the Firestore documents after deleting a document in the middle of the
 		// ascending order, to ensure that all registration documents will be found.
-		updateId(ctx, client, registrationID, registrationsResponse)
+		UpdateId(ctx, client, registrationID, registrationsResponse)
 
 		registrationsResponses = append(registrationsResponses, registrationsResponse)
 
@@ -122,7 +122,7 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 	return registrationsResponses, nil
 }
 
-func createRegistrationsResponse(data map[string]interface{}, lastChange string, idIndex int) resources.RegistrationsGET {
+func CreateRegistrationsResponse(data map[string]interface{}, lastChange string, idIndex int) resources.RegistrationsGET {
 	featuresData := data["features"].(map[string]interface{})
 
 	return resources.RegistrationsGET{
@@ -142,7 +142,7 @@ func createRegistrationsResponse(data map[string]interface{}, lastChange string,
 	}
 }
 
-func updateId(ctx context.Context, client *firestore.Client,
+func UpdateId(ctx context.Context, client *firestore.Client,
 	documentID string, getResponse resources.RegistrationsGET) {
 
 	// Update the document's id field.
