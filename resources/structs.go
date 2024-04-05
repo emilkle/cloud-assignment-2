@@ -47,12 +47,56 @@ type StatusResponse struct {
 	Uptime  float64 `json:"uptime"`
 }
 
+//###############################################################################
+
+/*
 // DashboardsGet Struct to display a dashboard and the last time it was retrieved
 type DashboardsGet struct {
 	Country       string   `json:"country"`
 	IsoCode       string   `json:"isoCode"`
 	Features      Features `json:"features"`
 	LastRetrieval string   `json:"last_retrieval"`
+}
+*/
+
+type DashboardsGetTest struct {
+	Country       string        `json:"country"`
+	IsoCode       string        `json:"isoCode"`
+	FeatureValues FeatureValues `json:"features"`
+	LastRetrieval string        `json:"last_retrieval"`
+}
+
+type FeatureValues struct {
+	Temperature          float64              `json:"temperature"`
+	Precipitation        float64              `json:"precipitation"`
+	Capital              string               `json:"capital"`
+	Coordinates          CoordinatesValues    `json:"coordinates"`
+	Population           int                  `json:"population"`
+	Area                 float64              `json:"area"`
+	TargetCurrencyValues TargetCurrencyValues `json:"target_currency_values"`
+}
+
+type CapitalPopulationArea struct {
+	Capital    []string `json:"capital"`
+	Population int      `json:"population"`
+	Area       float64  `json:"area"`
+}
+
+// CoordinatesResponse Struct to store the latitude and longitude from rest api
+type CoordinatesResponse struct {
+	Results []struct {
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	} `json:"results"`
+}
+
+type CoordinatesValues struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+type TargetCurrencyValues struct {
+	TargetCurrencies map[string]float64 `json:"target_currencies"`
 }
 
 // Notification endpoint structs
