@@ -9,6 +9,70 @@ import (
 	"testing"
 )
 
+var validData = map[string]interface{}{
+	"id":      1,
+	"country": "Norway",
+	"isoCode": "NO",
+	"features": map[string]interface{}{
+		"temperature":      true,
+		"precipitation":    true,
+		"capital":          true,
+		"coordinates":      true,
+		"population":       true,
+		"area":             true,
+		"targetCurrencies": []interface{}{"NOK", "USD"},
+	},
+	"lastChange": "20220101 15:07",
+}
+
+var invalidData = map[string]interface{}{
+	"id":      1,
+	"country": "Norway",
+	"isoCode": "NO",
+	"features": map[string]interface{}{
+		"temperature":      true,
+		"precipitation":    true,
+		"capital":          true,
+		"coordinates":      true,
+		"population":       true,
+		"area":             true,
+		"targetCurrencies": []string{"NOK", "USD"},
+	},
+	"lastChange": "20220101 15:07",
+}
+
+var want = resources.RegistrationsGET{
+	Id:      1,
+	Country: "Norway",
+	IsoCode: "NO",
+	Features: resources.Features{
+		Temperature:      true,
+		Precipitation:    true,
+		Capital:          true,
+		Coordinates:      true,
+		Population:       true,
+		Area:             true,
+		TargetCurrencies: []string{"NOK", "USD"},
+	},
+	LastChange: "20220101 15:07",
+}
+
+var doNotWant = resources.RegistrationsGET{
+	Id:      1,
+	Country: "Norway",
+	IsoCode: "NO",
+	Features: resources.Features{
+		Temperature:      true,
+		Precipitation:    true,
+		Capital:          true,
+		Coordinates:      true,
+		Population:       true,
+		Area:             true,
+		TargetCurrencies: nil,
+	},
+	LastChange: "20220101 15:07",
+}
+
 func TestCreateRegistrationsGET(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -55,12 +119,37 @@ func TestGetAllRegisteredDocuments(t *testing.T) {
 }
 
 func TestGetTargetCurrencies(t *testing.T) {
+	var currencies = []string{"NOK", "USD"}
+
+	var featuresData = map[string]interface{}{
+		"temperature":      true,
+		"precipitation":    true,
+		"capital":          true,
+		"coordinates":      true,
+		"population":       true,
+		"area":             true,
+		"targetCurrencies": []interface{}{"NOK", "USD"},
+	}
+
+	var invalidFeaturesData = map[string]interface{}{
+		"temperature":      true,
+		"precipitation":    true,
+		"capital":          true,
+		"coordinates":      true,
+		"population":       true,
+		"area":             true,
+		"targetCurrencies": []string{"NOK", "USD"},
+	}
+
 	tests := []struct {
 		name         string
 		featuresData map[string]interface{}
 		want         []string
+		wantErr      bool
 	}{
 		// TODO: Add test cases.
+		{name: "Returns string array", featuresData: featuresData, want: currencies, wantErr: false},
+		{name: "Returns error", featuresData: invalidFeaturesData, want: nil, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,70 +161,6 @@ func TestGetTargetCurrencies(t *testing.T) {
 }
 
 func Test_CreateRegistrationsResponse(t *testing.T) {
-	validData := map[string]interface{}{
-		"id":      1,
-		"country": "Norway",
-		"isoCode": "NO",
-		"features": map[string]interface{}{
-			"temperature":      true,
-			"precipitation":    true,
-			"capital":          true,
-			"coordinates":      true,
-			"population":       true,
-			"area":             true,
-			"targetCurrencies": []interface{}{"NOK", "USD"},
-		},
-		"lastChange": "20220101 15:07",
-	}
-
-	invalidData := map[string]interface{}{
-		"id":      1,
-		"country": "Norway",
-		"isoCode": "NO",
-		"features": map[string]interface{}{
-			"temperature":      true,
-			"precipitation":    true,
-			"capital":          true,
-			"coordinates":      true,
-			"population":       true,
-			"area":             true,
-			"targetCurrencies": []string{"NOK", "USD"},
-		},
-		"lastChange": "20220101 15:07",
-	}
-
-	want := resources.RegistrationsGET{
-		Id:      1,
-		Country: "Norway",
-		IsoCode: "NO",
-		Features: resources.Features{
-			Temperature:      true,
-			Precipitation:    true,
-			Capital:          true,
-			Coordinates:      true,
-			Population:       true,
-			Area:             true,
-			TargetCurrencies: []string{"NOK", "USD"},
-		},
-		LastChange: "20220101 15:07",
-	}
-
-	doNotWant := resources.RegistrationsGET{
-		Id:      1,
-		Country: "Norway",
-		IsoCode: "NO",
-		Features: resources.Features{
-			Temperature:      true,
-			Precipitation:    true,
-			Capital:          true,
-			Coordinates:      true,
-			Population:       true,
-			Area:             true,
-			TargetCurrencies: nil,
-		},
-		LastChange: "20220101 15:07",
-	}
-
 	tests := []struct {
 		name       string
 		data       map[string]interface{}
@@ -145,9 +170,10 @@ func Test_CreateRegistrationsResponse(t *testing.T) {
 		wantErr    bool
 	}{
 		// TODO: Add test cases.
-		{name: "Positive test", data: validData, lastChange: "20220101 15:07", idIndex: 1, want: want, wantErr: false},
-		{name: "Negative test", data: invalidData, lastChange: "20220101 15:07",
-			idIndex: 1, want: doNotWant, wantErr: true},
+		{name: "Positive test", data: validData, lastChange: "20220101 15:07", idIndex: 1,
+			want: want, wantErr: false},
+		{name: "Negative test", data: invalidData, lastChange: "20220101 15:07", idIndex: 1,
+			want: doNotWant, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
