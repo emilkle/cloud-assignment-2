@@ -5,6 +5,7 @@ import (
 	"context"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
@@ -185,21 +186,46 @@ func Test_CreateRegistrationsResponse(t *testing.T) {
 }
 
 func Test_UpdateId(t *testing.T) {
-	type args struct {
-		ctx         context.Context
-		client      *firestore.Client
+	ctx := context.Background()
+
+	clientMock := &MockFirestoreClient{}
+
+	testsStruct := []struct {
+		name        string
 		documentID  string
 		getResponse resources.RegistrationsGET
-	}
-	tests := []struct {
-		name string
-		args args
+		expectedErr bool
 	}{
 		// TODO: Add test cases.
+		{
+			name:        "Positive test",
+			documentID:  "test",
+			getResponse: resources.RegistrationsGET{Id: 1},
+			expectedErr: false,
+		},
+		{
+			name:        "Negative test",
+			documentID:  "", // Invalid document ID
+			getResponse: resources.RegistrationsGET{Id: 123},
+			expectedErr: true,
+		},
 	}
-	for _, tt := range tests {
+
+	for _, tt := range testsStruct {
 		t.Run(tt.name, func(t *testing.T) {
-			registrations.UpdateId(tt.args.ctx, tt.args.client, tt.args.documentID, tt.args.getResponse)
+			// Define the expected behavior for the Set method
+			clientMock.SetFunc = func(ctx context.Context, docRef *firestore.DocumentRef,
+				data interface{}, opts ...firestore.SetOption) (*firestore.WriteResult, error) {
+				validId, ok := data.(map[string]interface{})["id"].(int)
+				assert.True(t, ok, "expected 'id' field to be an integer")
+				assert.Equal(t, tt.documentID, docRef.ID)
+				assert.Equal(t, tt.getResponse.Id, validId)
+				// You can add more assertions for other arguments if needed
+				return nil, nil // Return whatever result you expect
+			}
+
+			// Call the function being tested
+			UpdateId(ctx, clientMock, tt.documentID, tt.getResponse)
 		})
 	}
 }
