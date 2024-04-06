@@ -99,9 +99,23 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	data := documents[0].Data()
 	featuresData := data["features"].(map[string]interface{})
 
-	// Create variable for coordinates
+	// Variables for data in the dashboards
+	var tempAndPrecip resources.TemperatureAndPrecipitationData
 	var coordinates resources.CoordinatesValues
 	var capitalPopArea resources.CapitalPopulationArea
+	var capital string
+	var population int
+	var area float64
+	var meanTemperature float64
+	var meanPrecipitation float64
+
+	// Helper variables
+	var latitude float64
+	var longitude float64
+	var coordinateData resources.CoordinatesValues
+	coordinateData, err = RetrieveCoordinates(data["country"].(string), idNumber)
+	latitude = coordinateData.Latitude
+	longitude = coordinateData.Longitude
 
 	// Checks if coordinates belong in this dashboard configuration
 	if featuresData["coordinates"].(bool) {
@@ -111,11 +125,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	// Retrieve capital, population and area
 	capitalPopArea, err = RetrieveCapitalPopulationAndArea(data["isoCode"].(string), idNumber)
 
-	var capital string
-	var population int
-	var area float64
-
-	// Check if dashboard configuration wants capital, population or area
+	// Check if dashboard configuration supports capital, population or area
 	if featuresData["capital"].(bool) {
 		capital = capitalPopArea.Capital[0]
 	}
@@ -126,25 +136,80 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 		area = capitalPopArea.Area
 	}
 
+	// Retrieve temperature and precipitation data
+	tempAndPrecip, err = RetrieveMeanTempAndPrecipitation(latitude, longitude, idNumber)
+
+	//check if temperature is part of the dashboard config and calculate the mean
+	if featuresData["temperature"].(bool) {
+		sumTemperature := 0.0
+		for _, temp := range tempAndPrecip.Temperature {
+			sumTemperature += temp
+		}
+		meanTemperature = sumTemperature / float64(len(tempAndPrecip.Temperature))
+	}
+	//check if Precipitation is part of the dashboard config and calculate the mean
+	if featuresData["precipitation"].(bool) {
+		sumPrecipitation := 0.0
+		for _, prec := range tempAndPrecip.Precipitation {
+			sumPrecipitation += prec
+		}
+		meanPrecipitation = sumPrecipitation / float64(len(tempAndPrecip.Precipitation))
+	}
+
 	// Returns dashboard populated with values depending on the configuration
 	return resources.DashboardsGetTest{
 		Country: data["country"].(string),
 		IsoCode: data["isoCode"].(string),
 		FeatureValues: resources.FeatureValues{
-			//Temperature:      featuresData["temperature"].(bool),
-			//Precipitation:    featuresData["precipitation"].(bool),
-			Capital:     capital,
-			Coordinates: coordinates,
-			Population:  population,
-			Area:        area,
+			Temperature:   meanTemperature,
+			Precipitation: meanPrecipitation,
+			Capital:       capital,
+			Coordinates:   coordinates,
+			Population:    population,
+			Area:          area,
 			//TargetCurrencies: registrations.GetTargetCurrencies(featuresData),
 		},
 		LastRetrieval: lastRetrieved,
 	}, nil
 }
 
-func RetrieveMeanTemperature() {
+func RetrieveMeanTempAndPrecipitation(latitude, longitude float64, id int) (resources.TemperatureAndPrecipitationData, error) {
+	// Construct URL
+	url := fmt.Sprintf(resources.METEO_TEMP_PERCIP+"forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
 
+	// Make HTTP request
+	response, err := http.Get(url)
+	if err != nil {
+		log.Printf("failed to fetch temp and precipitation data for dashboard with id: %d. Error: %s", id, err)
+		return resources.TemperatureAndPrecipitationData{}, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("failed to close response body when fetching temp and precipitation data for dashboard with id: %d. Error: %s", id, err)
+		}
+	}(response.Body)
+
+	// Decode JSON response
+	var temperatureAndPrecipitationResponse resources.TemperatureAndPrecipitationResponse
+	err = json.NewDecoder(response.Body).Decode(&temperatureAndPrecipitationResponse)
+	if err != nil {
+		return resources.TemperatureAndPrecipitationData{}, fmt.Errorf("failed to decode JSON response: %s", err)
+	}
+
+	// Check if any values were returned
+	if len(temperatureAndPrecipitationResponse.TemperatureAndPrecipitation.Temperature) == 0 &&
+		len(temperatureAndPrecipitationResponse.TemperatureAndPrecipitation.Precipitation) == 0 {
+		return resources.TemperatureAndPrecipitationData{}, fmt.Errorf("no temperature and precipitation data returned")
+	}
+
+	// Create and store temperature and precipitation data in struct
+	tempAndPrecipitationData := temperatureAndPrecipitationResponse.TemperatureAndPrecipitation
+
+	// Log and check if any temp and precipitation data was retrieved from the response
+	log.Printf("Retrieved temp and precipitation: %+v", tempAndPrecipitationData)
+
+	return tempAndPrecipitationData, nil
 }
 
 func RetrieveMeanPercipitation() {
@@ -154,8 +219,6 @@ func RetrieveMeanPercipitation() {
 func RetrieveCoordinates(country string, id int) (resources.CoordinatesValues, error) {
 	// Construct URL
 	url := fmt.Sprintf(resources.GEOCODING_METEO+"/search?name=%s&count=1&language=en&format=json", country)
-	//TEST
-	//url := "https://geocoding-api.open-meteo.com/v1/search?name=norway&count=1&language=en&format=json"
 
 	// Make HTTP request
 	response, err := http.Get(url)
@@ -187,7 +250,7 @@ func RetrieveCoordinates(country string, id int) (resources.CoordinatesValues, e
 	longitude := coordinatesResponse.Results[0].Longitude
 	log.Printf("Latitude: %f, Longitude: %f", latitude, longitude)
 
-	// Create coordinate struct
+	// Create and store coordinates in coordinates struct
 	coordinates := resources.CoordinatesValues{
 		Latitude:  latitude,
 		Longitude: longitude,
@@ -205,7 +268,6 @@ func RetrieveCoordinates(country string, id int) (resources.CoordinatesValues, e
 func RetrieveCapitalPopulationAndArea(isoCode string, id int) (resources.CapitalPopulationArea, error) {
 	// Construct URL
 	url := fmt.Sprintf(resources.REST_COUNTRIES_PATH+"/alpha/%s", isoCode)
-	//url := "http://129.241.150.113:8080/v3.1/alpha" + isoCode
 
 	// Make HTTP request
 	response, err := http.Get(url)
@@ -220,18 +282,19 @@ func RetrieveCapitalPopulationAndArea(isoCode string, id int) (resources.Capital
 		}
 	}(response.Body)
 
+	// Decode the JSON response
 	var data []resources.CapitalPopulationArea
 	err = json.NewDecoder(response.Body).Decode(&data)
 	if err != nil {
 		return resources.CapitalPopulationArea{}, fmt.Errorf("failed to decode JSON response: %s", err)
 	}
 
-	// Check if data is not empty
+	// Check if data has any results
 	if len(data) == 0 {
 		return resources.CapitalPopulationArea{}, fmt.Errorf("no data found for ISO code: %s", isoCode)
 	}
 
-	//TEST
+	// Log and make sure data was returned
 	log.Printf("Retrieved capital, population, and area data: %+v", data[0])
 
 	return data[0], nil

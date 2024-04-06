@@ -11,6 +11,7 @@ const CURRENCY_PATH = "http://129.241.150.113:9090/currency/"
 
 // Constants for fetching feature values
 const GEOCODING_METEO = "https://geocoding-api.open-meteo.com/v1"
+const METEO_TEMP_PERCIP = "https://api.open-meteo.com/v1"
 
 // Basic error constants
 const STANDARD_ERROR = "The request failed with error: "

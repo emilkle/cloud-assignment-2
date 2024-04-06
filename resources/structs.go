@@ -49,16 +49,6 @@ type StatusResponse struct {
 
 //###############################################################################
 
-/*
-// DashboardsGet Struct to display a dashboard and the last time it was retrieved
-type DashboardsGet struct {
-	Country       string   `json:"country"`
-	IsoCode       string   `json:"isoCode"`
-	Features      Features `json:"features"`
-	LastRetrieval string   `json:"last_retrieval"`
-}
-*/
-
 type DashboardsGetTest struct {
 	Country       string        `json:"country"`
 	IsoCode       string        `json:"isoCode"`
@@ -74,6 +64,15 @@ type FeatureValues struct {
 	Population           int                  `json:"population"`
 	Area                 float64              `json:"area"`
 	TargetCurrencyValues TargetCurrencyValues `json:"target_currency_values"`
+}
+
+type TemperatureAndPrecipitationResponse struct {
+	TemperatureAndPrecipitation TemperatureAndPrecipitationData `json:"temperature_and_precipitation"`
+}
+
+type TemperatureAndPrecipitationData struct {
+	Temperature   []float64 `json:"temperature_2m"`
+	Precipitation []float64 `json:"precipitation"`
 }
 
 type CapitalPopulationArea struct {
