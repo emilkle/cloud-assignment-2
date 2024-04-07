@@ -13,59 +13,6 @@ import (
 	"time"
 )
 
-/*
-// RetrieveDashboardGet returns a single/specific dashboard based on the dashboard ID.
-func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
-
-	// Convert/parse string to integer
-	idNumber, err := strconv.Atoi(dashboardId)
-	if err != nil {
-		log.Printf("Failed to parse ID: %s. Error: %s", dashboardId, err)
-		return resources.DashboardsGet{}, err
-	}
-
-	// Make query to the database to return all documents based on the specified ID
-	query := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==", idNumber).Limit(1)
-	documents, err := query.Documents(ctx).GetAll()
-	if err != nil {
-		log.Printf("Failed to fetch documents. Error: %s", err)
-		return resources.DashboardsGet{}, err
-	}
-
-	// Check if any document with the specified ID were found
-	if len(documents) == 0 {
-		err := fmt.Errorf("no document found with ID: %s", dashboardId)
-		log.Println(err)
-		return resources.DashboardsGet{}, err
-	}
-
-	// Create a timestamp for the last time this dashboard was retrieved
-	var lastRetrieved = time.Now().Format("20060102 15:04")
-
-	// Take only the first document returned by the query
-	data := documents[0].Data()
-	featuresData := data["features"].(map[string]interface{})
-
-	// Returns a dashboard
-	return resources.DashboardsGet{
-		Country: data["country"].(string),
-		IsoCode: data["isoCode"].(string),
-		Features: resources.Features{
-			Temperature:      featuresData["temperature"].(bool),
-			Precipitation:    featuresData["precipitation"].(bool),
-			Capital:          featuresData["capital"].(bool),
-			Coordinates:      featuresData["coordinates"].(bool),
-			Population:       featuresData["population"].(bool),
-			Area:             featuresData["area"].(bool),
-			TargetCurrencies: registrations.GetTargetCurrencies(featuresData),
-		},
-		LastRetrieval: lastRetrieved,
-	}, nil
-}
-*/
-
 // RetrieveDashboardGet returns a single/specific dashboard based on the dashboard ID.
 func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, error) {
 	client := database.GetFirestoreClient()
@@ -109,12 +56,16 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	var area float64
 	var meanTemperature float64
 	var meanPrecipitation float64
+	var exchangeRates resources.TargetCurrencyValues
+	var selectedExchangeRates resources.TargetCurrencyValues
 
 	// Helper variables
 	var latitude float64
 	var longitude float64
 	var coordinateData resources.CoordinatesValues
 	coordinateData, err = RetrieveCoordinates(data["country"].(string), idNumber)
+	// Lat and Long used in the RetrieveTempAndPrecipitation function.
+	// Because a dashboard configuration might not have the coordinates set to true
 	latitude = coordinateData.Latitude
 	longitude = coordinateData.Longitude
 
@@ -174,18 +125,49 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	fmt.Println("Mean temperature:", meanTemperature)
 	fmt.Println("Mean precipitation:", meanPrecipitation)
 
+	// Retrieve exchange rates
+	exchangeRates, err = RetrieveCurrencyExchangeRates(idNumber)
+
+	// Retrieve the target currencies as interface slice
+	targetCurrenciesInterface := featuresData["targetCurrencies"].([]interface{})
+
+	// Initialize a slice to store the string values
+	targetCurrencies := make([]string, len(targetCurrenciesInterface))
+
+	// Iterate over the interface slice and convert each element to a string
+	for i, currency := range targetCurrenciesInterface {
+		targetCurrencies[i] = currency.(string)
+	}
+	//DEBUGGING
+	fmt.Println("exchangeRates:", exchangeRates)
+
+	// Initializing the TargetCurrencies map within TargetCurrencyValues before using it
+	selectedExchangeRates = resources.TargetCurrencyValues{
+		TargetCurrencies: make(map[string]float64),
+	}
+
+	// Iterate over targetCurrencies slice and retrieve corresponding rates
+	for _, currency := range targetCurrencies {
+		rate, ok := exchangeRates.TargetCurrencies[currency]
+		if ok {
+			selectedExchangeRates.TargetCurrencies[currency] = rate
+		}
+	}
+	//DEBUGGING
+	fmt.Println("selectedExchangeRates:", selectedExchangeRates)
+
 	// Returns dashboard populated with values depending on the configuration
 	return resources.DashboardsGetTest{
 		Country: data["country"].(string),
 		IsoCode: data["isoCode"].(string),
 		FeatureValues: resources.FeatureValues{
-			Temperature:   meanTemperature,
-			Precipitation: meanPrecipitation,
-			Capital:       capital,
-			Coordinates:   coordinates,
-			Population:    population,
-			Area:          area,
-			//TargetCurrencies: registrations.GetTargetCurrencies(featuresData),
+			Temperature:          meanTemperature,
+			Precipitation:        meanPrecipitation,
+			Capital:              capital,
+			Coordinates:          coordinates,
+			Population:           population,
+			Area:                 area,
+			TargetCurrencyValues: selectedExchangeRates,
 		},
 		LastRetrieval: lastRetrieved,
 	}, nil
@@ -320,4 +302,55 @@ func RetrieveCapitalPopulationAndArea(isoCode string, id int) (resources.Capital
 	log.Printf("Retrieved capital, population, and area data: %+v", data[0])
 
 	return data[0], nil
+}
+
+// RetrieveCurrencyExchangeRates Fetches the exchange rates of currencies with NOK as base (NOK to currency)
+func RetrieveCurrencyExchangeRates(id int) (resources.TargetCurrencyValues, error) {
+	// Construct URL
+	url := resources.CURRENCY_PATH + "NOK"
+
+	// Make HTTP request
+	response, err := http.Get(url)
+	if err != nil {
+		log.Printf("failed to fetch exchange rates for dashboard with id: %d. Error: %s", id, err)
+		return resources.TargetCurrencyValues{}, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("failed to close response body when fetching exchange rates for dashboard with id: %d. Error: %s", id, err)
+		}
+	}(response.Body)
+
+	// Decode the JSON response
+	var responseData map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&responseData)
+	if err != nil {
+		return resources.TargetCurrencyValues{}, fmt.Errorf("failed to decode JSON response: %s", err)
+	}
+
+	// Extract rates from the response data
+	ratesData, ok := responseData["rates"].(map[string]interface{})
+	if !ok {
+		return resources.TargetCurrencyValues{}, fmt.Errorf("failed to extract rates from JSON response")
+	}
+
+	// Populate the TargetCurrencyValues struct
+	targetCurrencies := make(map[string]float64)
+	for currency, rate := range ratesData {
+		rateValue, ok := rate.(float64)
+		if ok {
+			targetCurrencies[currency] = rateValue
+		}
+	}
+
+	// Create the TargetCurrencyValues struct
+	exchangeRatesResponse := resources.TargetCurrencyValues{
+		TargetCurrencies: targetCurrencies,
+	}
+
+	// Log and make sure data was returned
+	log.Printf("Retrieved exchange rates: %+v", exchangeRatesResponse)
+
+	return exchangeRatesResponse, nil
 }
