@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -100,7 +101,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	featuresData := data["features"].(map[string]interface{})
 
 	// Variables for data in the dashboards
-	var tempAndPrecip resources.TemperatureAndPrecipitationData
+	var tempAndPrecip resources.HourlyData
 	var coordinates resources.CoordinatesValues
 	var capitalPopArea resources.CapitalPopulationArea
 	var capital string
@@ -137,24 +138,41 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	}
 
 	// Retrieve temperature and precipitation data
-	tempAndPrecip, err = RetrieveMeanTempAndPrecipitation(latitude, longitude, idNumber)
+	tempAndPrecip, err = RetrieveTempAndPrecipitation(latitude, longitude, idNumber)
+
+	//DEBUGGING
+	// Print temperature and precipitation data for debugging
+	fmt.Println("Temperature data:", tempAndPrecip.Temperature)
+	fmt.Println("Precipitation data:", tempAndPrecip.Precipitation)
 
 	//check if temperature is part of the dashboard config and calculate the mean
 	if featuresData["temperature"].(bool) {
 		sumTemperature := 0.0
 		for _, temp := range tempAndPrecip.Temperature {
-			sumTemperature += temp
+			if temp != 0.0 {
+				sumTemperature += temp
+			}
 		}
-		meanTemperature = sumTemperature / float64(len(tempAndPrecip.Temperature))
+		meanTemperature = sumTemperature / float64(len(tempAndPrecip.Time))
+		meanTemperature = math.Round(meanTemperature*10) / 10
 	}
 	//check if Precipitation is part of the dashboard config and calculate the mean
 	if featuresData["precipitation"].(bool) {
 		sumPrecipitation := 0.0
 		for _, prec := range tempAndPrecip.Precipitation {
-			sumPrecipitation += prec
+			if prec != 0.0 {
+				sumPrecipitation += prec
+			}
 		}
-		meanPrecipitation = sumPrecipitation / float64(len(tempAndPrecip.Precipitation))
+		meanPrecipitation = sumPrecipitation / float64(len(tempAndPrecip.Time))
+		meanPrecipitation = math.Round(meanPrecipitation*100) / 100
+
 	}
+
+	//DEBUGGING
+	// Print mean temperature and precipitation for debugging
+	fmt.Println("Mean temperature:", meanTemperature)
+	fmt.Println("Mean precipitation:", meanPrecipitation)
 
 	// Returns dashboard populated with values depending on the configuration
 	return resources.DashboardsGetTest{
@@ -173,15 +191,19 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	}, nil
 }
 
-func RetrieveMeanTempAndPrecipitation(latitude, longitude float64, id int) (resources.TemperatureAndPrecipitationData, error) {
+// RetrieveTempAndPrecipitation Retrieves 24 hour temperature and precipitation values at specified coordinates
+func RetrieveTempAndPrecipitation(latitude, longitude float64, id int) (resources.HourlyData, error) {
 	// Construct URL
-	url := fmt.Sprintf(resources.METEO_TEMP_PERCIP+"forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
+	url := fmt.Sprintf(resources.METEO_TEMP_PERCIP+"/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
+
+	//DEBUGGING
+	log.Printf("API URL: %s", url)
 
 	// Make HTTP request
 	response, err := http.Get(url)
 	if err != nil {
 		log.Printf("failed to fetch temp and precipitation data for dashboard with id: %d. Error: %s", id, err)
-		return resources.TemperatureAndPrecipitationData{}, err
+		return resources.HourlyData{}, err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -191,20 +213,23 @@ func RetrieveMeanTempAndPrecipitation(latitude, longitude float64, id int) (reso
 	}(response.Body)
 
 	// Decode JSON response
-	var temperatureAndPrecipitationResponse resources.TemperatureAndPrecipitationResponse
-	err = json.NewDecoder(response.Body).Decode(&temperatureAndPrecipitationResponse)
+	var forecastResponse resources.ForecastResponse
+	err = json.NewDecoder(response.Body).Decode(&forecastResponse)
 	if err != nil {
-		return resources.TemperatureAndPrecipitationData{}, fmt.Errorf("failed to decode JSON response: %s", err)
+		return resources.HourlyData{}, fmt.Errorf("failed to decode JSON response: %s", err)
 	}
 
+	// DEBUGGING
+	log.Printf("Decoded API Response: %+v", forecastResponse)
+
 	// Check if any values were returned
-	if len(temperatureAndPrecipitationResponse.TemperatureAndPrecipitation.Temperature) == 0 &&
-		len(temperatureAndPrecipitationResponse.TemperatureAndPrecipitation.Precipitation) == 0 {
-		return resources.TemperatureAndPrecipitationData{}, fmt.Errorf("no temperature and precipitation data returned")
+	if len(forecastResponse.Hourly.Temperature) == 0 &&
+		len(forecastResponse.Hourly.Precipitation) == 0 {
+		return resources.HourlyData{}, fmt.Errorf("no temperature and precipitation data returned")
 	}
 
 	// Create and store temperature and precipitation data in struct
-	tempAndPrecipitationData := temperatureAndPrecipitationResponse.TemperatureAndPrecipitation
+	tempAndPrecipitationData := forecastResponse.Hourly
 
 	// Log and check if any temp and precipitation data was retrieved from the response
 	log.Printf("Retrieved temp and precipitation: %+v", tempAndPrecipitationData)
@@ -212,10 +237,7 @@ func RetrieveMeanTempAndPrecipitation(latitude, longitude float64, id int) (reso
 	return tempAndPrecipitationData, nil
 }
 
-func RetrieveMeanPercipitation() {
-
-}
-
+// RetrieveCoordinates Retrieves the country coordinates for a dashboard
 func RetrieveCoordinates(country string, id int) (resources.CoordinatesValues, error) {
 	// Construct URL
 	url := fmt.Sprintf(resources.GEOCODING_METEO+"/search?name=%s&count=1&language=en&format=json", country)
@@ -298,8 +320,4 @@ func RetrieveCapitalPopulationAndArea(isoCode string, id int) (resources.Capital
 	log.Printf("Retrieved capital, population, and area data: %+v", data[0])
 
 	return data[0], nil
-}
-
-func RetrieveCurrencies() {
-
 }

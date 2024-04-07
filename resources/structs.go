@@ -66,11 +66,12 @@ type FeatureValues struct {
 	TargetCurrencyValues TargetCurrencyValues `json:"target_currency_values"`
 }
 
-type TemperatureAndPrecipitationResponse struct {
-	TemperatureAndPrecipitation TemperatureAndPrecipitationData `json:"temperature_and_precipitation"`
+type ForecastResponse struct {
+	Hourly HourlyData `json:"hourly"`
 }
 
-type TemperatureAndPrecipitationData struct {
+type HourlyData struct {
+	Time          []string  `json:"time"`
 	Temperature   []float64 `json:"temperature_2m"`
 	Precipitation []float64 `json:"precipitation"`
 }
@@ -97,6 +98,8 @@ type CoordinatesValues struct {
 type TargetCurrencyValues struct {
 	TargetCurrencies map[string]float64 `json:"target_currencies"`
 }
+
+//###########################################################################
 
 // Notification endpoint structs
 
