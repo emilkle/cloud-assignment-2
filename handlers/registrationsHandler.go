@@ -5,6 +5,7 @@ import (
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -14,13 +15,13 @@ func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	switch r.Method {
 	case http.MethodGet:
-		registrationRequestGET(w, r)
+		RegistrationRequestGET(w, r)
 	case http.MethodPost:
-		registrationRequestPOST(w, r)
+		RegistrationRequestPOST(w, r)
 	case http.MethodPut:
-		registrationRequestPUT(w, r)
+		RegistrationRequestPUT(w, r)
 	case http.MethodDelete:
-		registrationRequestDELETE(w, r)
+		RegistrationRequestDELETE(w, r)
 	default:
 		http.Error(w, "REST method '"+r.Method+"' is not supported. Try"+
 			" '"+http.MethodGet+", "+http.MethodPost+", "+http.MethodPut+" "+
@@ -32,7 +33,7 @@ func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 // It is possible to get more documents at once by calling /dashboard/v1/registrations/1,2,3 for
 // getting specific entries in specific orders, or by
 // using /dashboard/v1/registrations/ to get all documents.
-func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
+func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
 	urlParts := strings.Split(r.URL.Path, "/")
 	id := urlParts[4]
 
@@ -67,7 +68,7 @@ func registrationRequestGET(w http.ResponseWriter, r *http.Request) {
 	standardResponseWriter(w, registrationsResponses)
 }
 
-func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
+func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
@@ -82,7 +83,8 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 	var postRegistrationBody resources.RegistrationsPOSTandPUT
 	err1 := json.NewDecoder(r.Body).Decode(&postRegistrationBody)
 	if err1 != nil {
-		http.Error(w, resources.DECODING_ERROR+"of the POST request.", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the POST request. Use this structure for your"+
+			" POST request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusInternalServerError)
 		return
 	}
 
@@ -100,7 +102,7 @@ func registrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 	registrations.UpdatePOSTRequest(ctx, client, w, documentID, postResponse)
 }
 
-func registrationRequestPUT(w http.ResponseWriter, r *http.Request) {
+func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
@@ -117,7 +119,8 @@ func registrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	var putRegistrationBody resources.RegistrationsPOSTandPUT
 	err1 := json.NewDecoder(r.Body).Decode(&putRegistrationBody)
 	if err1 != nil {
-		http.Error(w, resources.DECODING_ERROR+"of the PUT request.", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the PUT request. Use this structure for your"+
+			" PUT request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusInternalServerError)
 		return
 	}
 
@@ -133,7 +136,7 @@ func registrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func registrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
+func RegistrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 

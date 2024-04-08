@@ -46,7 +46,8 @@ func main() {
 	// Initializes the handlers for the different endpoints that the API uses
 	http.HandleFunc(resources.REGISTRATIONS_PATH, handlers.RegistrationsHandler)
 	http.HandleFunc(resources.DASHBOARDS_PATH, handlers.DashboardsHandler)
-	//http.HandleFunc(NOTIFICATIONS_PATH, handler.)
+	http.HandleFunc(resources.NOTIFICATIONS_PATH, handlers.WebhookHandler)
+	http.HandleFunc(resources.TEMP_WEBHOOK_INV, handlers.ServiceHandler)
 	http.HandleFunc(resources.STATUS_PATH, handlers.StatusHandler)
 	//handler.StartTimer()
 

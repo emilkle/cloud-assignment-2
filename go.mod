@@ -3,6 +3,7 @@ module countries-dashboard-service
 go 1.21
 
 require (
+	cloud.google.com/go/firestore v1.15.0
 	firebase.google.com/go v3.13.0+incompatible
 	google.golang.org/api v0.170.0
 )
@@ -11,10 +12,10 @@ require (
 	cloud.google.com/go v0.112.1 // indirect
 	cloud.google.com/go/compute v1.24.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/firestore v1.15.0 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
 	cloud.google.com/go/longrunning v0.5.5 // indirect
 	cloud.google.com/go/storage v1.39.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -24,6 +25,9 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/testify v1.9.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
@@ -43,4 +47,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240311132316-a219d84964c2 // indirect
 	google.golang.org/grpc v1.62.1 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
