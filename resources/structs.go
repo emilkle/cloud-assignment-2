@@ -57,8 +57,8 @@ type DashboardsGet struct {
 
 // Notification endpoint structs
 
-// WebhookPOST struct for POST request
-type WebhookPOST struct {
+// WebhookRegistration struct for POST request
+type WebhookRegistration struct {
 	URL     string `json:"url"`
 	IsoCode string `json:"country"`
 	Event   string `json:"event"`
@@ -78,8 +78,8 @@ type ViewWebhook struct {
 	Event   string `json:"Event"`
 }
 
-// EventData struct for webhook invocation
-type EventData struct {
+// WebhookInvocation struct for webhook invocation
+type WebhookInvocation struct {
 	ID      string `json:"ID"`
 	Country string `json:"Country"`
 	Event   string `json:"Event"`
