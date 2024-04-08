@@ -12,18 +12,22 @@ import (
 	"time"
 )
 
+// GetDocumentID retrieves the document ID based on the requested ID.
+// It searches for the document with the provided ID in Firestore and returns its ID along with an error, if any.
 func GetDocumentID(ctx context.Context, client *firestore.Client,
 	requestedId string) (string, error) {
-
+	// Convert requested ID to integer.
 	requestedIdInt, err := strconv.Atoi(requestedId)
 	if err != nil {
 		log.Println("Registration id " + requestedId + " could not be parsed: " + err.Error())
 		return "", err
 	}
 
+	// Query Firestore for documents with matching ID.
 	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==",
 		requestedIdInt).Documents(ctx)
 
+	// Iterate through query results.
 	var found bool
 	for {
 		document, err1 := iter.Next()
@@ -35,9 +39,10 @@ func GetDocumentID(ctx context.Context, client *firestore.Client,
 			return "", err1
 		}
 		found = true
-		return document.Ref.ID, nil
+		return document.Ref.ID, nil // Return document ID if found.
 	}
 
+	// If no document found with requested ID, return an error.
 	if !found {
 		log.Println("The document with ID" + requestedId + " was not found.")
 		return "", errors.New("document not found")
@@ -46,6 +51,8 @@ func GetDocumentID(ctx context.Context, client *firestore.Client,
 	return "", nil
 }
 
+// CreatePUTRequest updates the registration document in Firestore.
+// It takes the provided data, constructs an update request, and updates the document in the database.
 func CreatePUTRequest(ctx context.Context, client *firestore.Client, w http.ResponseWriter,
 	data resources.RegistrationsPOSTandPUT, documentID string) {
 	putRegistration := map[string]interface{}{
@@ -60,10 +67,10 @@ func CreatePUTRequest(ctx context.Context, client *firestore.Client, w http.Resp
 			"area":             data.Features.Area,
 			"targetCurrencies": data.Features.TargetCurrencies,
 		},
-		"lastChange": time.Now().Format("20060102 15:04"),
+		"lastChange": time.Now().Format("20060102 15:04"), // Update lastChange timestamp.
 	}
 
-	// Update the document
+	// Update the document in Firestore.
 	_, err3 := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentID).Set(ctx,
 		putRegistration, firestore.MergeAll)
 
