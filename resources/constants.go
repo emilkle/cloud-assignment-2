@@ -9,6 +9,9 @@ const REST_COUNTRIES_PATH = "http://129.241.150.113:8080/v3.1"
 const OPEN_METEO_PATH = "https://open-meteo.com/en/features#available-apis"
 const CURRENCY_PATH = "http://129.241.150.113:9090/currency/"
 
+// Webhook invocation during development
+const TEMP_WEBHOOK_INV = "https://webhook.site/268f5454-08b6-4639-84ee-99381ad547d2"
+
 // Basic error constants
 const STANDARD_ERROR = "The request failed with error: "
 const DECODING_ERROR = "Error during JSON decoding "
