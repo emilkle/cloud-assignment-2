@@ -204,8 +204,8 @@ func RegistrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Indicate if the documents were successfully deleted or not by returning an HTTP status code.
-	log.Println("The requested documents were successfully deleted from the database.")
-	http.Error(w, "The requested documents were successfully deleted "+
+	log.Println("The requested document(s) were successfully deleted from the database.")
+	http.Error(w, "The requested document(s) were successfully deleted "+
 		"from the database.", http.StatusNoContent)
 }
 
