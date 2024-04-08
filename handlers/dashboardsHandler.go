@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"countries-dashboard-service/functions"
+	"countries-dashboard-service/functions/dashboards"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"log"
@@ -28,7 +28,7 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve dashboard
-	dashboard, err := functions.RetrieveDashboardGet(IDs[0])
+	dashboard, err := dashboards.RetrieveDashboardGet(IDs[0])
 	if err != nil {
 		http.Error(w, "Dashboard not found", http.StatusNotFound)
 		return
