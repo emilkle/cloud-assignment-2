@@ -11,15 +11,21 @@ import (
 	"strconv"
 )
 
+// CreateRegistrationsGET retrieves registration data based on the provided ID.
+// It retrieves data from Firestore, constructs a RegistrationsGET struct, and returns it along with an error, if any.
 func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) {
+	// Get Firestore client and context.
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
+	// Parse ID parameter to integer.
 	idNumber, err1 := strconv.Atoi(idParam)
 	if err1 != nil {
 		log.Println("This id could not be parsed, try another id.", err1.Error())
 		return resources.RegistrationsGET{}, err1
 	}
+
+	// Query Firestore for documents with matching ID.
 	query := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==", idNumber).Limit(1)
 	documents, err2 := query.Documents(ctx).GetAll()
 	if err2 != nil {
@@ -27,13 +33,14 @@ func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) 
 		return resources.RegistrationsGET{}, err2
 	}
 
-	// Check if any documents were found
+	// Check if any documents were found.
 	if len(documents) == 0 {
-		err3 := fmt.Errorf("No document found with ID: %s", idParam)
+		err3 := fmt.Errorf("no document found with ID: %s", idParam)
 		log.Println(err3)
 		return resources.RegistrationsGET{}, err3
 	}
 
+	// Construct RegistrationsGET struct from retrieved data.
 	for _, document := range documents {
 		data := document.Data()
 		featuresData := data["features"].(map[string]interface{})
@@ -54,24 +61,28 @@ func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) 
 			LastChange: data["lastChange"].(string),
 		}, nil
 	}
+
+	// Print the error message to the server log if the retrieving of the document fails.
 	log.Println("Document with ID", idParam, "was not found.")
 	return resources.RegistrationsGET{}, nil
 }
 
+// GetTargetCurrencies retrieves target currencies from featuresData.
+// It returns a slice of strings containing the target currencies.
 func GetTargetCurrencies(featuresData map[string]interface{}) []string {
 	targetCurrenciesInterface, ok := featuresData["targetCurrencies"].([]interface{})
 	if !ok {
-		// TargetCurrencies is not an array of interfaces
+		// TargetCurrencies is not an array of interfaces.
 		log.Println("The requested currency data was not found.")
 	}
 
-	// Converting []interface{} to []string
+	// Converting []interface{} to []string.
 	var targetCurrencies []string
 	for _, currency := range targetCurrenciesInterface {
 		if c, ok1 := currency.(string); ok1 {
 			targetCurrencies = append(targetCurrencies, c)
 		} else {
-			// TargetCurrencies is not a string
+			// TargetCurrencies array is not a string.
 			log.Println("The requested currency data is invalid.")
 			return nil
 		}
@@ -79,15 +90,19 @@ func GetTargetCurrencies(featuresData map[string]interface{}) []string {
 	return targetCurrencies
 }
 
+// GetAllRegisteredDocuments retrieves all registration documents from Firestore.
+// It constructs RegistrationsGET structs for each document and returns them along with an error, if any.
 func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
+	// Get Firestore client and context.
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
+	// Iterate over documents in ascending order of lastChange timestamp.
 	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).OrderBy("lastChange", firestore.Asc).Documents(ctx)
-
 	var registrationsResponses []resources.RegistrationsGET
-
 	idIndex := 1
+
+	// Iterate through documents and construct RegistrationsGET structs.
 	for {
 		document, err1 := iter.Next()
 		if err1 == iterator.Done {
@@ -98,7 +113,7 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 		}
 		data := document.Data()
 
-		// Retrieve the lastChange timestamp from the document
+		// Retrieve the lastChange timestamp from the document.
 		lastChange, ok := data["lastChange"].(string)
 		if !ok {
 			log.Printf("The timestamp of the last change"+
@@ -106,6 +121,7 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 			continue
 		}
 
+		// Construct RegistrationsGET struct.
 		registrationsResponse := CreateRegistrationsResponse(data, lastChange, idIndex)
 
 		registrationID := document.Ref.ID
@@ -122,6 +138,7 @@ func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 	return registrationsResponses, nil
 }
 
+// CreateRegistrationsResponse constructs a RegistrationsGET struct from provided data.
 func CreateRegistrationsResponse(data map[string]interface{}, lastChange string, idIndex int) resources.RegistrationsGET {
 	featuresData := data["features"].(map[string]interface{})
 
@@ -142,6 +159,7 @@ func CreateRegistrationsResponse(data map[string]interface{}, lastChange string,
 	}
 }
 
+// UpdateId updates the ID field of a document in Firestore.
 func UpdateId(ctx context.Context, client *firestore.Client,
 	documentID string, getResponse resources.RegistrationsGET) {
 
