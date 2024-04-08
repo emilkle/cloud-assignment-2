@@ -9,31 +9,11 @@ import (
 	"os"
 )
 
-//Firebase context and client used by Firestore functions throughout the program.
-//var ctx context.Context
-//var client *firestore.Client
-
 func main() {
-
-	// Initialize firestore
+	// Initialize firestore database.
 	if err := database.InitializeFirestore(); err != nil {
 		log.Fatalf("Failed to initalize firestore: %v", err)
 	}
-
-	//ctx = context.Background()
-
-	/**
-	// Connection to Firebase
-	opt := option.WithCredentialsFile("./database/fb_key.json")
-	app, err := firebase.NewApp(ctx, nil, opt)
-	if err != nil {
-		log.Println("error initializing app: %v", err)
-		return
-	}
-
-	//Initialize client
-	client, err = app.Firestore(ctx)
-	*/
 
 	// This is needed to make render use the correct port set by their environment variables.
 	port := os.Getenv("PORT")
@@ -49,8 +29,11 @@ func main() {
 	http.HandleFunc(resources.NOTIFICATIONS_PATH, handlers.WebhookHandler)
 	http.HandleFunc(resources.TEMP_WEBHOOK_INV, handlers.ServiceHandler)
 	http.HandleFunc(resources.STATUS_PATH, handlers.StatusHandler)
-	//handler.StartTimer()
 
 	log.Println("Service is listening on port " + port)
-	http.ListenAndServe(":"+port, nil)
+	err := http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		log.Println("Could not listen to port "+port, err)
+		return
+	}
 }
