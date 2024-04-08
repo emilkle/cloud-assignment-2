@@ -125,6 +125,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	fmt.Println("Mean temperature:", meanTemperature)
 	fmt.Println("Mean precipitation:", meanPrecipitation)
 
+	//Exchange rates are always shown in a dashboard
 	// Retrieve exchange rates
 	exchangeRates, err = RetrieveCurrencyExchangeRates(idNumber)
 
@@ -138,6 +139,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 	for i, currency := range targetCurrenciesInterface {
 		targetCurrencies[i] = currency.(string)
 	}
+
 	//DEBUGGING
 	fmt.Println("exchangeRates:", exchangeRates)
 
@@ -161,13 +163,13 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGetTest, erro
 		Country: data["country"].(string),
 		IsoCode: data["isoCode"].(string),
 		FeatureValues: resources.FeatureValues{
-			Temperature:          meanTemperature,
-			Precipitation:        meanPrecipitation,
-			Capital:              capital,
-			Coordinates:          coordinates,
-			Population:           population,
-			Area:                 area,
-			TargetCurrencyValues: selectedExchangeRates,
+			Temperature:      meanTemperature,
+			Precipitation:    meanPrecipitation,
+			Capital:          capital,
+			Coordinates:      coordinates,
+			Population:       population,
+			Area:             area,
+			TargetCurrencies: selectedExchangeRates.TargetCurrencies,
 		},
 		LastRetrieval: lastRetrieved,
 	}, nil

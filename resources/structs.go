@@ -57,13 +57,13 @@ type DashboardsGetTest struct {
 }
 
 type FeatureValues struct {
-	Temperature          float64              `json:"temperature"`
-	Precipitation        float64              `json:"precipitation"`
-	Capital              string               `json:"capital"`
-	Coordinates          CoordinatesValues    `json:"coordinates"`
-	Population           int                  `json:"population"`
-	Area                 float64              `json:"area"`
-	TargetCurrencyValues TargetCurrencyValues `json:"target_currency_values"`
+	Temperature      float64            `json:"temperature"`
+	Precipitation    float64            `json:"precipitation"`
+	Capital          string             `json:"capital"`
+	Coordinates      CoordinatesValues  `json:"coordinates"`
+	Population       int                `json:"population"`
+	Area             float64            `json:"area"`
+	TargetCurrencies map[string]float64 `json:"target_currencies"`
 }
 
 type ForecastResponse struct {
