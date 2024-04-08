@@ -49,7 +49,7 @@ type StatusResponse struct {
 
 //###############################################################################
 
-type DashboardsGetTest struct {
+type DashboardsGet struct {
 	Country       string        `json:"country"`
 	IsoCode       string        `json:"isoCode"`
 	FeatureValues FeatureValues `json:"features"`
