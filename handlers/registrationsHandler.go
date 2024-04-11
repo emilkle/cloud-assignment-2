@@ -150,7 +150,7 @@ func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	if err1 != nil {
 		// Respond with decoding error if unable to decode request body.
 		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the PUT request. Use this structure for your"+
-			" PUT request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusInternalServerError)
+			" PUT request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusForbidden)
 		return
 	}
 
