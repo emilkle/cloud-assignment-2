@@ -23,6 +23,7 @@ const ENCODING_ERROR = "Error during JSON encoding "
 
 // Firestore collections
 const REGISTRATIONS_COLLECTION = "Registrations"
+const WEBHOOK_COLLECTION = "Webhooks"
 
 // Example structs
 const JSON_STRUCT_POST_AND_PUT = `{
