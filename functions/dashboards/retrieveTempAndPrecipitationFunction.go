@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 )
 
 // RetrieveTempAndPrecipitation Retrieves 24 hour temperature and precipitation values at specified coordinates
@@ -18,6 +19,11 @@ func RetrieveTempAndPrecipitation(latitude, longitude float64, id int) (resource
 	response, err := HttpRequest(url, fetching, id)
 	// Defer close of response body
 	defer CloseResponseBody(response.Body, fetching, id)
+
+	// Check status code of response
+	if response.StatusCode != http.StatusOK {
+		return resources.HourlyData{}, fmt.Errorf("HTTP error: %s", response.Status)
+	}
 
 	// Decode JSON response
 	var forecastResponse resources.ForecastResponse

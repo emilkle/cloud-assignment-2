@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 )
 
 // RetrieveCoordinates Retrieves the country coordinates for a dashboard
@@ -19,6 +20,11 @@ func RetrieveCoordinates(country string, id int) (resources.CoordinatesValues, e
 	response, err := HttpRequest(url, fetching, id)
 	// Defer close of response body
 	defer CloseResponseBody(response.Body, fetching, id)
+
+	// Check status code of response
+	if response.StatusCode != http.StatusOK {
+		return resources.CoordinatesValues{}, fmt.Errorf("HTTP error: %s", response.Status)
+	}
 
 	// Decode the JSON response
 	var coordinatesResponse resources.CoordinatesResponse

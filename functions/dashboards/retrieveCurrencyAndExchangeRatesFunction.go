@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 )
 
 // RetrieveCurrencyExchangeRates Fetches the exchange rates of currencies with NOK as base (NOK to currency)
@@ -19,6 +20,11 @@ func RetrieveCurrencyExchangeRates(id int) (resources.TargetCurrencyValues, erro
 	response, err := HttpRequest(url, fetching, id)
 	// Defer close of response body
 	defer CloseResponseBody(response.Body, fetching, id)
+
+	// Check status code of response
+	if response.StatusCode != http.StatusOK {
+		return resources.TargetCurrencyValues{}, fmt.Errorf("HTTP error: %s", response.Status)
+	}
 
 	// Decode the JSON response
 	var responseData map[string]interface{}
