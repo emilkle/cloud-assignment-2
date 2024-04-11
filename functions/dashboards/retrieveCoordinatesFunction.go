@@ -8,13 +8,21 @@ import (
 	"net/http"
 )
 
+// TestUrlRetrieveCoordinates variable used for testing the RetrieveCoordinates function
+var TestUrlRetrieveCoordinates string
+
 // RetrieveCoordinates Retrieves the country coordinates for a dashboard
-func RetrieveCoordinates(country string, id int) (resources.CoordinatesValues, error) {
+func RetrieveCoordinates(country string, id int, runTest bool) (resources.CoordinatesValues, error) {
 	// Variable used in error message for HttpRequest function.
 	fetching := "coordinates"
 
+	var url string
 	// Construct URL
-	url := fmt.Sprintf(resources.GEOCODING_METEO+"/search?name=%s&count=1&language=en&format=json", country)
+	if runTest == false {
+		url = fmt.Sprintf(resources.GEOCODING_METEO+"/search?name=%s&count=1&language=en&format=json", country)
+	} else if runTest == true {
+		url = TestUrlRetrieveCoordinates
+	}
 
 	// Make HTTP request to specified URL
 	response, err := HttpRequest(url, fetching, id)

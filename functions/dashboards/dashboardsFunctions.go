@@ -59,7 +59,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 	var latitude float64
 	var longitude float64
 	var coordinateData resources.CoordinatesValues
-	coordinateData, err = RetrieveCoordinates(data["country"].(string), idNumber)
+	coordinateData, err = RetrieveCoordinates(data["country"].(string), idNumber, false)
 	// Lat and Long used in the RetrieveTempAndPrecipitation function.
 	// Because a dashboard configuration might not have the coordinates set to true
 	latitude = coordinateData.Latitude
@@ -89,7 +89,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 
 	// Retrieve temperature and precipitation data
 	if featuresData["temperature"].(bool) || featuresData["precipitation"].(bool) {
-		tempAndPrecip, err = RetrieveTempAndPrecipitation(latitude, longitude, idNumber)
+		tempAndPrecip, err = RetrieveTempAndPrecipitation(latitude, longitude, idNumber, false)
 		temperature, precipitation := CalculateMeanTemperatureAndPrecipitation(tempAndPrecip)
 
 		//Check if dashboard configuration support temperature and precipitation
@@ -159,7 +159,7 @@ func CalculateMeanTemperatureAndPrecipitation(tempAndPrecip resources.HourlyData
 // RetrieveTargetCurrenciesAndExchangeRates retrieves the currency exchange rates displayed in a dashboard configuration
 func RetrieveTargetCurrenciesAndExchangeRates(featuresData map[string]interface{}, id int) (resources.TargetCurrencyValues, error) {
 	// Retrieve exchange rates
-	exchangeRates, err := RetrieveCurrencyExchangeRates(id)
+	exchangeRates, err := RetrieveCurrencyExchangeRates(id, false)
 	if err != nil {
 		return resources.TargetCurrencyValues{}, err
 	}

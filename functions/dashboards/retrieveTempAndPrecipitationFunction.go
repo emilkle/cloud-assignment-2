@@ -8,12 +8,20 @@ import (
 	"net/http"
 )
 
+// TestUrlRetrieveTempAndPrecipitation variable used when testing the RetrieveTempAndPrecipitation function
+var TestUrlRetrieveTempAndPrecipitation string
+
 // RetrieveTempAndPrecipitation Retrieves 24 hour temperature and precipitation values at specified coordinates
-func RetrieveTempAndPrecipitation(latitude, longitude float64, id int) (resources.HourlyData, error) {
+func RetrieveTempAndPrecipitation(latitude, longitude float64, id int, runTest bool) (resources.HourlyData, error) {
 	fetching := "temp and precipitation"
 
+	var url string
 	// Construct URL
-	url := fmt.Sprintf(resources.METEO_TEMP_PERCIP+"/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
+	if runTest == false {
+		url = fmt.Sprintf(resources.METEO_TEMP_PERCIP+"/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
+	} else if runTest == true {
+		url = TestUrlRetrieveCoordinates
+	}
 
 	// Make HTTP request to specified URL
 	response, err := HttpRequest(url, fetching, id)

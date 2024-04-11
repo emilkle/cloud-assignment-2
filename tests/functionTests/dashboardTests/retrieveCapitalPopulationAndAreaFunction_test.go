@@ -67,7 +67,7 @@ func TestRetrieveCapitalPopulationAndArea(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set the test URL if the runTest flag is true to use the mock HTTP server
 			if tt.runTest {
-				dashboards.TestUrl = tt.testServer.URL
+				dashboards.TestUrlRetrieveCapitalPopulationAndArea = tt.testServer.URL
 			}
 
 			// Call RetrieveCapitalPopulationAndArea function using the values from the test cases

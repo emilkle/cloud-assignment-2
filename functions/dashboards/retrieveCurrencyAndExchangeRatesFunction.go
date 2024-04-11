@@ -8,13 +8,21 @@ import (
 	"net/http"
 )
 
+// TestUrlRetrieveCurrencyExchangeRates variable used when testing TestUrlRetrieveCurrencyExchangeRates function
+var TestUrlRetrieveCurrencyExchangeRates string
+
 // RetrieveCurrencyExchangeRates Fetches the exchange rates of currencies with NOK as base (NOK to currency)
-func RetrieveCurrencyExchangeRates(id int) (resources.TargetCurrencyValues, error) {
+func RetrieveCurrencyExchangeRates(id int, runTest bool) (resources.TargetCurrencyValues, error) {
 	// Variable used in error message for HttpRequest function.
 	fetching := "exchange rates"
 
+	var url string
 	// Construct URL
-	url := resources.CURRENCY_PATH + "NOK"
+	if runTest == false {
+		url = resources.CURRENCY_PATH + "NOK"
+	} else if runTest == true {
+		url = TestUrlRetrieveCurrencyExchangeRates
+	}
 
 	// Make HTTP request to specified URL
 	response, err := HttpRequest(url, fetching, id)

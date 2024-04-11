@@ -8,19 +8,20 @@ import (
 	"net/http"
 )
 
-// TestUrl variable used when testing the RetrieveCapitalPopulationAndArea function
-var TestUrl string
+// TestUrlRetrieveCapitalPopulationAndArea variable used when testing the RetrieveCapitalPopulationAndArea function
+var TestUrlRetrieveCapitalPopulationAndArea string
 
 // RetrieveCapitalPopulationAndArea Retrieves the capital, population and area of a country to be inserted in a dashboard
 func RetrieveCapitalPopulationAndArea(isoCode string, id int, runTest bool) (resources.CapitalPopulationArea, error) {
 	// Variable used in error message for HttpRequest function.
 	fetching := "capital, population and area"
+
 	var url string
 	// Construct URL
 	if runTest == false {
 		url = fmt.Sprintf(resources.REST_COUNTRIES_PATH+"/alpha/%s", isoCode)
 	} else if runTest == true {
-		url = TestUrl
+		url = TestUrlRetrieveCapitalPopulationAndArea
 	}
 
 	// Make HTTP request to specified URL
