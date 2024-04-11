@@ -3,7 +3,6 @@ package registrations
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	"countries-dashboard-service/database"
 	"countries-dashboard-service/resources"
 	"fmt"
 	"google.golang.org/api/iterator"
@@ -13,11 +12,7 @@ import (
 
 // CreateRegistrationsGET retrieves registration data based on the provided ID.
 // It retrieves data from Firestore, constructs a RegistrationsGET struct, and returns it along with an error, if any.
-func CreateRegistrationsGET(idParam string) (resources.RegistrationsGET, error) {
-	// Get Firestore client and context.
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
-
+func CreateRegistrationsGET(ctx context.Context, client *firestore.Client, idParam string) (resources.RegistrationsGET, error) {
 	// Parse ID parameter to integer.
 	idNumber, err1 := strconv.Atoi(idParam)
 	if err1 != nil {
@@ -92,11 +87,7 @@ func GetTargetCurrencies(featuresData map[string]interface{}) []string {
 
 // GetAllRegisteredDocuments retrieves all registration documents from Firestore.
 // It constructs RegistrationsGET structs for each document and returns them along with an error, if any.
-func GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
-	// Get Firestore client and context.
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
-
+func GetAllRegisteredDocuments(ctx context.Context, client *firestore.Client) ([]resources.RegistrationsGET, error) {
 	// Iterate over documents in ascending order of lastChange timestamp.
 	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).OrderBy("lastChange", firestore.Asc).Documents(ctx)
 	var registrationsResponses []resources.RegistrationsGET
