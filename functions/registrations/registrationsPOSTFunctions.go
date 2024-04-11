@@ -143,8 +143,8 @@ func CreatePOSTRequest(ctx context.Context, client *firestore.Client, w http.Res
 // CreatePOSTResponse creates a response for a successful POST request.
 // It retrieves all registered documents, calculates the ID for the next document,
 // and returns a response along with an error, if any.
-func CreatePOSTResponse() (resources.RegistrationsPOSTResponse, error) {
-	allDocuments, _ := GetAllRegisteredDocuments()
+func CreatePOSTResponse(ctx context.Context, client *firestore.Client) (resources.RegistrationsPOSTResponse, error) {
+	allDocuments, _ := GetAllRegisteredDocuments(ctx, client)
 	nextId := len(allDocuments) + 1
 
 	return resources.RegistrationsPOSTResponse{
