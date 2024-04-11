@@ -1,6 +1,6 @@
 # Countries Dashboard Service
 
-
+<!---   
 
 ## Getting started
 
@@ -65,10 +65,274 @@ On some READMEs, you may see small images that convey metadata, such as whether 
 Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew.
+However, consider the possibility that whoever is reading your README is a novice and would like more guidance. 
+Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. 
+If it only runs in a specific context like a particular programming language version or operating system or has 
+dependencies that have to be installed manually, also add a Requirements subsection. -->
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Assignment 2 in PROG2005 Cloud Technologies
+
+### A fully functional GoLang REST API with configurable and dynamically populated information dashboards.
+
+## Endpoints
+<!--- Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README. -->
+
+### Registrations
+```
+/dashboard/v1/registrations/
+```
+#### - HTTP request GET
+Example GET requests:
+* Get a configuration with a specific "id":
+  * /dashboard/v1/registrations/1
+
+* Example response:
+    ```
+    {
+        "id": 1,
+        "country": "Norway",
+        "isoCode": "NO",
+        "features": {
+            "temperature": true,
+            "precipitation": true,
+            "capital": true,
+            "coordinates": true,
+            "population": true,
+            "area": false,
+            "targetCurrencies": [
+                "EUR",
+                "USD",
+                "SEK"
+            ]
+        },
+        "lastChange": "20240229 14:07"
+    }
+    ```
+
+* Get multiple chosen configurations with a specific "id" for each document:
+    * /dashboard/v1/registrations/1,2
+
+* Example response:
+
+    ```
+    [
+        {
+            "id": 1,
+            "country": "Norway",
+            "isoCode": "NO",
+            "features": {
+                "temperature": true,
+                "precipitation": true,
+                "capital": true,
+                "coordinates": true,
+                "population": true,
+                "area": false,
+                "targetCurrencies": [
+                    "EUR",
+                    "USD",
+                    "SEK"
+                ]
+            },
+            "lastChange": "20240229 14:07"
+        },
+        {
+            "id": 2,
+            "country": "Sweden",
+            "isoCode": "SE",
+            "features": {
+                "temperature": true,
+                "precipitation": true,
+                "capital": true,
+                "coordinates": false,
+                "population": false,
+                "area": false,
+                "targetCurrencies": [
+                    "NOK",
+                    "SEK",
+                    "USD",
+                    "DKK"
+                ]
+            },
+            "lastChange": "20240324 10:57"
+        }
+    ]    
+    ```
+
+* Get all registered configurations:
+    * /dashboard/v1/registrations/
+
+
+* Example response:
+    ```
+    [
+        {
+            "id": 1,
+            "country": "Norway",
+            "isoCode": "NO",
+            "features": {
+                "temperature": true,
+                "precipitation": true,
+                "capital": true,
+                "coordinates": true,
+                "population": true,
+                "area": false,
+                "targetCurrencies": [
+                    "EUR",
+                    "USD",
+                    "SEK"
+                ]
+            },
+            "lastChange": "20240229 14:07"
+        },
+        {
+            "id": 2,
+            "country": "Sweden",
+            "isoCode": "SE",
+            "features": {
+                "temperature": true,
+                "precipitation": true,
+                "capital": true,
+                "coordinates": false,
+                "population": false,
+                "area": false,
+                "targetCurrencies": [
+                    "NOK",
+                    "SEK",
+                    "USD",
+                    "DKK"
+                ]
+            },
+            "lastChange": "20240324 10:57"
+        },
+        {
+            "id": 3,
+            "country": "Denmark",
+            "isoCode": "DK",
+            "features": {
+                "temperature": false,
+                "precipitation": true,
+                "capital": true,
+                "coordinates": true,
+                "population": false,
+                "area": true,
+                "targetCurrencies": [
+                    "NOK",
+                    "MYR",
+                    "JPY",
+                    "EUR"
+                ]
+            },
+            "lastChange": "20240324 16:19"
+        },
+    ]    
+    ```
+
+#### - HTTP request POST
+Example POST request - Store a new registration on the server and return the associated "id":
+* Path: /dashboard/v1/registrations/
+* Request body:
+    ```
+    {
+       "country": "France",
+       "isoCode": "FR",
+       "features": {
+          "temperature": true,
+          "precipitation": true,
+          "capital": true,
+          "coordinates": true,
+          "population": true,
+          "area": true,
+          "targetCurrencies": [
+                "EUR",
+                "USD"
+          ]
+       }
+    }
+    ```
+Example response:
+```
+{
+    "id": 4
+    "lastChange": "20240329 15:41"
+}
+```
+
+#### - HTTP request PUT
+Example PUT requests - Change a registered configuration's fields and return if the operation was successful:
+* Path: /dashboard/v1/registrations/4
+* Request body:
+    ```
+    {
+       "country": "France",
+       "isoCode": "FR",
+       "features": {
+          "temperature": false,   //The tempersture field wil be updated to false.
+          "precipitation": true,
+          "capital": true,
+          "coordinates": true,
+          "population": true,
+          "area": true,
+          "targetCurrencies": [
+                "EUR",
+                "CHF"    //The Currency is changed from USD to CHF.
+          ]
+       }
+    }
+    ```
+
+
+Example response:
+* Returns HTTP status code 200 if the operation was successful. 
+
+#### - HTTP request DELETE
+Example DELETE requests:
+* Delete one registered configuration with a specific "id" field:
+    * /dashboard/v1/registrations/4
+
+Example response:
+* Returns HTTP status code 204 if the operation was successful.
+
+* Delete multiple registered configurations with specific "id" fields:
+    * /dashboard/v1/registrations/3,4
+
+Example response:
+* Returns HTTP status code 204 if the operation was successful.
+
+
+### Dashboards
+```
+/dashboard/v1/dashboards/
+```
+Example requests:
+
+
+Example response:
+```
+
+```
+
+
+### Notifications
+```
+/dashboard/v1/notifications/
+```
+Example requests:
+
+
+Example response:
+```
+
+```
+
+### Status
+```
+/dashboard/v1/status/
+```
+Example response:
+```
+
+```
 
 ## Support
 Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
@@ -83,8 +347,9 @@ For people who want to make changes to your project, it's helpful to have some d
 
 You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Support
+If you have any questions or issues, please contact us at:
+- Emil Klevgård-Slåttsveen: <emilkle@stud.ntnu.no>
 
 ## License
 For open source projects, say how it is licensed.
