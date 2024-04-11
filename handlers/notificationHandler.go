@@ -21,17 +21,17 @@ var SignatureKey = "X-SIGNATURE"
 var Secret []byte
 
 // Firebase will replace this variable
-var webhooks = []resources.WebhookRegistration{}
+var webhooks = []resources.WebhookPOST{}
 
 /*
 Handles webhook registration (POST) and lookup (GET) requests.
-Expects WebhookRegistration struct body in request.
+Expects WebhookPOST struct body in request.
 */
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		// Expects incoming body in terms of WebhookRegistration struct
-		webhook := resources.WebhookRegistration{}
+		// Expects incoming body in terms of WebhookPOST struct
+		webhook := resources.WebhookPOST{}
 		err := json.NewDecoder(r.Body).Decode(&webhook)
 		if err != nil {
 			http.Error(w, "Something went wrong: "+err.Error(), http.StatusBadRequest)

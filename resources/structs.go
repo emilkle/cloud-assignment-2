@@ -103,8 +103,8 @@ type TargetCurrencyValues struct {
 
 // Notification endpoint structs
 
-// WebhookRegistration struct for POST request
-type WebhookRegistration struct {
+// WebhookPOST struct for POST request
+type WebhookPOST struct {
 	URL     string `json:"url"`
 	IsoCode string `json:"country"`
 	Event   string `json:"event"`
@@ -116,8 +116,8 @@ type WebhookPOSTResponse struct {
 	LastChange string `json:"LastChange"`
 }
 
-// ViewWebhook struct for view specific webhook GET response
-type ViewWebhook struct {
+// WebhookGET struct for view specific webhook GET response
+type WebhookGET struct {
 	ID      string `json:"ID"`
 	URL     string `json:"URL"`
 	Country string `json:"Country"`
