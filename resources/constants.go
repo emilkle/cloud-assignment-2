@@ -17,7 +17,7 @@ const METEO_TEMP_PERCIP = "https://api.open-meteo.com/v1"
 const TEMP_WEBHOOK_INV = "https://webhook.site/268f5454-08b6-4639-84ee-99381ad547d2"
 
 // Basic error constants
-const STANDARD_ERROR = "The request failed with error: "
+const STANDARD_DATATYPE_ERROR = "Incorrect datatype: "
 const DECODING_ERROR = "Error during JSON decoding "
 const ENCODING_ERROR = "Error during JSON encoding "
 
@@ -31,9 +31,9 @@ const JSON_STRUCT_POST_AND_PUT = `{
 	   "features": {
 	                  "temperature": true,                      
 	                  "precipitation": true,                    
-	                  "capital": true,                          
+	                  "capital": false,                          
 	                  "coordinates": true,                      
-	                  "population": true,                       
+	                  "population": false,                       
 	                  "area": true,                             
 	                  "targetCurrencies": ["EUR", "USD", "SEK"] 
 	               }
