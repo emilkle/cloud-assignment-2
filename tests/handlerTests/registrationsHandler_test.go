@@ -8,50 +8,7 @@ import (
 	"testing"
 )
 
-// Define an interface for handling registration requests
-type RegistrationsHandler interface {
-	HandleRegistrations(w http.ResponseWriter, r *http.Request)
-}
-
-// Real implementation of RegistrationsHandler
-type RealRegistrationHandler struct{}
-
-func (rh *RealRegistrationHandler) HandleRegistrations(w http.ResponseWriter, r *http.Request) {
-	handlers.RegistrationsHandler(w, r)
-}
-
-// Mock implementation of RegistrationsHandler
-type MockRegistrationsHandler struct {
-	HandleRegistrationsFunc func(w http.ResponseWriter, r *http.Request)
-}
-
-func (mh *MockRegistrationsHandler) HandleRegistrations(w http.ResponseWriter, r *http.Request) {
-	// Call the mock function provided by the test
-	mh.HandleRegistrationsFunc(w, r)
-}
-
-func SetRegistrationsHandler(handler RegistrationsHandler) {
-	registrationsHandler = handler
-}
-
-// Global variable to hold the registrations handler
-var registrationsHandler RegistrationsHandler
-
-// RegistrationsHandlerFunc is a function type that wraps the method HandleRegistrations
-type RegistrationsHandlerFunc func(w http.ResponseWriter, r *http.Request)
-
-// HandleRegistrations is the handler function for registrations
-func (f RegistrationsHandlerFunc) HandleRegistrations(w http.ResponseWriter, r *http.Request) {
-	f(w, r)
-}
-
-func NewRegistrationsHandler(f func(w http.ResponseWriter, r *http.Request)) RegistrationsHandler {
-	return RegistrationsHandlerFunc(f)
-}
-
 /*
-type MockRegistrations struct{}
-
 func (m *MockRegistrations) GetAllRegisteredDocuments() ([]resources.RegistrationsGET, error) {
 	return []resources.RegistrationsGET{
 		{
@@ -137,56 +94,64 @@ func (m *MockRegistrations) CreateRegistrationsGET(id string) (resources.Registr
 	return denmark, nil
 }*/
 
-func RegistrationsHandlerMock(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "application/json")
-	switch r.Method {
-	case http.MethodGet:
-		w.WriteHeader(http.StatusOK)
-	case http.MethodPost:
-		w.WriteHeader(http.StatusOK)
-	case http.MethodPut:
-		w.WriteHeader(http.StatusOK)
-	case http.MethodDelete:
-		w.WriteHeader(http.StatusOK)
-	default:
-		http.Error(w, "REST method '"+r.Method+"' is not supported. Try"+
-			" '"+http.MethodGet+", "+http.MethodPost+", "+http.MethodPut+" "+
-			""+"or"+" "+http.MethodDelete+"' instead. ", http.StatusNotImplemented)
-		return
-	}
-}
-
 func TestRegistrationsHandler(t *testing.T) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,
+		r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			w.WriteHeader(http.StatusOK)
+		case http.MethodPost:
+			w.WriteHeader(http.StatusOK)
+		case http.MethodPut:
+			w.WriteHeader(http.StatusOK)
+		case http.MethodDelete:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "REST method '"+r.Method+"' is not supported. Try"+
+				" '"+http.MethodGet+", "+http.MethodPost+", "+http.MethodPut+" "+
+				""+"or"+" "+http.MethodDelete+"' instead. ", http.StatusNotImplemented)
+			return
+		}
+	}))
+	defer mockServer.Close()
+
 	tests := []struct {
 		name         string
 		method       string
-		path         string
+		server       *httptest.Server
 		expectedCode int
 	}{
 		// TODO: Add test cases.
-		{"Method = GET (Status OK)", http.MethodGet, resources.REGISTRATIONS_PATH,
+		{"Method = GET (Status OK)", http.MethodGet, mockServer,
 			http.StatusOK},
-		{"Method = POST (Status OK)", http.MethodPost, resources.REGISTRATIONS_PATH,
+		{"Method = POST (Status OK)", http.MethodPost, mockServer,
 			http.StatusOK},
-		{"Method = PUT (Status OK)", http.MethodPut, resources.REGISTRATIONS_PATH,
+		{"Method = PUT (Status OK)", http.MethodPut, mockServer,
 			http.StatusOK},
-		{"Method = DELETE (Status OK)", http.MethodDelete, resources.REGISTRATIONS_PATH,
+		{"Method = DELETE (Status OK)", http.MethodDelete, mockServer,
 			http.StatusOK},
-		{"Method = OPTIONS (Status not implemented)", http.MethodOptions, resources.REGISTRATIONS_PATH,
+		{"Method = OPTIONS (Status not implemented)", http.MethodOptions, mockServer,
 			http.StatusNotImplemented},
-		{"Method = HEAD (Status not implemented)", http.MethodHead, resources.REGISTRATIONS_PATH,
+		{"Method = HEAD (Status not implemented)", http.MethodHead, mockServer,
 			http.StatusNotImplemented},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.method, tt.path, nil)
-			w := httptest.NewRecorder()
+			req, err := http.NewRequest(tt.method, mockServer.URL, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			RegistrationsHandlerMock(w, request)
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
 
-			if w.Code != tt.expectedCode {
-				t.Errorf("For method %s, expected status code %d but got %d."+
-					" Response body: %s", tt.method, tt.expectedCode, w.Code, w.Body.String())
+			if resp.StatusCode != tt.expectedCode {
+				t.Errorf("handler returned wrong status code for method %s: got %v want %v",
+					tt.method, resp.StatusCode, tt.expectedCode)
 			}
 		})
 	}
@@ -223,8 +188,12 @@ func Test_RegistrationRequestDELETE(t *testing.T) {
 	}
 }
 
-/*
 func Test_RegistrationRequestGET(t *testing.T) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+	}))
+	defer mockServer.Close()
+
 	tests := []struct {
 		name               string
 		server             *httptest.Server
@@ -236,38 +205,31 @@ func Test_RegistrationRequestGET(t *testing.T) {
 		//r      *http.Request
 	}{
 		// TODO: Add test cases.
-		{name: "Positive server response", server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		}))},
 		{
 			name:               "Get all registrations",
-			request:            httptest.NewRequest(http.MethodGet, resources.REGISTRATIONS_PATH, nil),
+			server:             mockServer,
+			url:                mockServer.URL,
 			expectedStatusCode: http.StatusOK,
-			expectedError:      false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//req, err := http.NewRequest(http.MethodGet, tt.url, nil)
-			//if err != nil {
-			//	t.Fatalf("Failed to create request: %v", err)
-			//}
+			request, err := http.NewRequest(http.MethodGet, tt.url, nil)
+			if err != nil {
+				t.Fatalf("Failed to create request: %v", err)
+			}
 
-			//rr := httptest.NewRecorder()
-			//handler := http.HandlerFunc(handlers.RegistrationRequestGET)
-			//handler.ServeHTTP(rr, tt.request)
+			w := httptest.NewRecorder()
+			handlers.RegistrationRequestGET(w, request)
 
-			rr := httptest.NewRecorder()
-			handlers.RegistrationRequestGET(rr, tt.request)
-
-			if statusCode := rr.Code; statusCode != tt.expectedStatusCode {
+			if statusCode := w.Code; statusCode != tt.expectedStatusCode {
 				t.Errorf("Expected status code %d but got %d.", tt.expectedStatusCode, statusCode)
 			}
 
 		})
 	}
-}*/
+}
 
 func Test_RegistrationRequestPOST(t *testing.T) {
 	type args struct {
