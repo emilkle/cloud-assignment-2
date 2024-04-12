@@ -106,14 +106,20 @@ type TargetCurrencyValues struct {
 // WebhookPOST struct for POST request
 type WebhookPOST struct {
 	URL     string `json:"url"`
-	IsoCode string `json:"country"`
+	Country string `json:"country"`
 	Event   string `json:"event"`
 }
 
 // WebhookPOSTResponse struct for POST response
 type WebhookPOSTResponse struct {
-	ID         string `json:"ID"`
-	LastChange string `json:"LastChange"`
+	ID string `json:"ID"`
+}
+
+// WebhookDELETEResponse struct for POST response
+type WebhookDELETEResponse struct {
+	ID    string `json:"ID"`
+	URL   string `json:"URL"`
+	Event string `json:"Event"`
 }
 
 // WebhookGET struct for view specific webhook GET response
