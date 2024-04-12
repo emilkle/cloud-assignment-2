@@ -3,10 +3,9 @@ package database
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	"log"
-
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"
+	"log"
 )
 
 // Firebase context and client used by Firestore functions throughout the program.

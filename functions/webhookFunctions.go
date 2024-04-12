@@ -1,16 +1,19 @@
 package functions
 
 import (
+	"cloud.google.com/go/firestore"
+	"context"
 	"countries-dashboard-service/database"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"fmt"
 	uuid2 "github.com/google/uuid"
+	"google.golang.org/api/iterator"
 	"log"
 )
 
 // Generates a unique ID using google uuid library
-func generateID() string {
+func GenerateID() string {
 	uuid, err := uuid2.NewRandom()
 	if err != nil {
 		// If something goes wrong returns a placeholder ID
@@ -20,25 +23,27 @@ func generateID() string {
 }
 
 // Adds a webhook to the firestore database
-func addWebhook(data []byte) error {
+func AddWebhook(webhookID string, data resources.WebhookPOST) error {
 	ctx := database.GetFirestoreContext()
 	client := database.GetFirestoreClient()
 
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 
+	// Encode data struct as JSON byte slice
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("error marshalling webhook data: %v", err)
+	}
+
 	var webhook resources.WebhookGET
-	err := json.Unmarshal(data, &webhook)
+	err = json.Unmarshal(jsonData, &webhook)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling webhook data: %v", err)
 	}
 
-	// Generate ID and assign it to webhook struct
-	id := generateID()
-	webhook.ID = id
-
 	// Create a new document with a unique ID
 	_, _, err = ref.Add(ctx, map[string]interface{}{
-		"ID":      webhook.ID,
+		"ID":      webhookID,
 		"URL":     webhook.URL,
 		"Country": webhook.Country,
 		"Event":   webhook.Event,
@@ -51,32 +56,123 @@ func addWebhook(data []byte) error {
 	return nil
 }
 
-func deleteWebhook(structID string) error {
-	ctx := database.GetFirestoreContext()
-	client := database.GetFirestoreClient()
+// Deletes a webhook from the database
+func DeleteWebhook(ctx context.Context, client *firestore.Client, structID string) (*resources.WebhookPOSTResponse, error) {
 
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 	query := ref.Where("ID", "==", structID).Limit(1)
 
 	docs, err := query.Documents(ctx).GetAll()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(docs) == 0 {
-		return fmt.Errorf("Document with webhook ID %s not found", structID)
+		return nil, fmt.Errorf("document with webhook ID %s not found", structID)
 	}
 
 	_, err = docs[0].Ref.Delete(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	log.Println("Document with webhook ID %s successfully deleted", structID)
-	return nil
+	log.Printf("Document with webhook ID %v successfully deleted\n", structID)
+	return &resources.WebhookPOSTResponse{ID: structID}, nil
 }
 
-func getAllWebhooks() []resources.WebhookGET {
+func CreateWebhookGET(ctx context.Context, client *firestore.Client, idParam string) (resources.WebhookGET, error) {
+	// Parse ID parameter to integer.
+	//idNumber, err1 := strconv.Atoi(idParam)
+	//if err1 != nil {
+	//	log.Println("This id could not be parsed, try another id.", err1.Error())
+	//	return resources.WebhookGET{}, err1
+	//}
+
+	// Query Firestore for documents with matching ID.
+	query := client.Collection(resources.WEBHOOK_COLLECTION).Where("id", "==", idParam).Limit(1)
+	documents, err2 := query.Documents(ctx).GetAll()
+	if err2 != nil {
+		log.Println("Failed to fetch documents:", err2)
+		return resources.WebhookGET{}, err2
+	}
+
+	// Check if any documents were found.
+	if len(documents) == 0 {
+		err3 := fmt.Errorf("no document found with ID: %s", idParam)
+		log.Println(err3)
+		return resources.WebhookGET{}, err3
+	}
+
+	// Construct RegistrationsGET struct from retrieved data.
+	for _, document := range documents {
+		data := document.Data()
+
+		return resources.WebhookGET{
+			ID:      idParam,
+			URL:     data["URL"].(string),
+			Country: data["Country"].(string),
+			Event:   data["Event"].(string),
+		}, nil
+	}
+
+	// Print the error message to the server log if the retrieving of the document fails.
+	log.Println("Document with ID", idParam, "was not found.")
+	return resources.WebhookGET{}, nil
+}
+
+func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.WebhookGET, error) {
+	// Iterate over documents in ascending order of lastChange timestamp.
+	iter := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx)
+	var webhookResponses []resources.WebhookGET
+	idIndex := 1
+
+	// Iterate through documents and construct RegistrationsGET structs.
+	for {
+		document, err1 := iter.Next()
+		if err1 == iterator.Done {
+			break
+		}
+		if err1 != nil {
+			return nil, err1
+		}
+		data := document.Data()
+
+		// Retrieve the lastChange timestamp from the document.
+		/*
+			lastChange, ok := data["lastChange"].(string)
+			if !ok {
+				log.Printf("The timestamp of the last change"+
+					" %v could not be converted to string.", data["lastChange"])
+				continue
+			}
+
+		*/
+
+		// Construct RegistrationsGET response struct.
+		webhookResponse := resources.WebhookGET{
+			ID:      data["ID"].(string),
+			URL:     data["URL"].(string),
+			Country: data["Country"].(string),
+			Event:   data["Event"].(string),
+		}
+
+		//registrationID := document.Ref.ID
+
+		// Update all the id fields in for the Firestore documents after deleting a document in the middle of the
+		// ascending order, to ensure that all registration documents will be found.
+		//UpdateId(ctx, client, registrationID, registrationsResponse)
+
+		webhookResponses = append(webhookResponses, webhookResponse)
+
+		idIndex++
+	}
+
+	return webhookResponses, nil
+}
+
+/*
+// Finds and returns all webhooks from database
+func GetAllWebhooks() ([]resources.WebhookGET, error) {
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
@@ -85,6 +181,7 @@ func getAllWebhooks() []resources.WebhookGET {
 	docs, err := ref.Documents(ctx).GetAll()
 	if err != nil {
 		log.Printf("Error fetching documents: %s\n", err)
+		return nil, err
 	}
 
 	var webhooks []resources.WebhookGET
@@ -93,9 +190,62 @@ func getAllWebhooks() []resources.WebhookGET {
 		var webhook resources.WebhookGET
 		if err := doc.DataTo(&webhook); err != nil {
 			log.Printf("Error parsing %s", err)
-			return nil
 		}
 		webhooks = append(webhooks, webhook)
 	}
-	return webhooks
+	return webhooks, nil
 }
+
+*/
+
+// Fetches a single webhook from the database
+func GetWebhook(webhookID string) (*resources.WebhookGET, error) {
+	client := database.GetFirestoreClient()
+	ctx := database.GetFirestoreContext()
+
+	collection := client.Collection(resources.WEBHOOK_COLLECTION)
+
+	iter := collection.Documents(ctx)
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error iteration through documents: %v", err)
+		}
+
+		var webhook resources.WebhookGET
+		if err := doc.DataTo(webhook); err != nil {
+			log.Printf("Failed to parse document data: %v", err)
+		}
+
+		if webhook.ID == webhookID {
+			fmt.Printf("Found document with ID %s\n", webhook.ID)
+			return &webhook, nil
+		}
+	}
+	return nil, nil
+}
+
+/*
+	}
+	snapshot, err := ref.Documents(ctx).GetAll()
+	if err != nil {
+		log.Println("Error fetching documents: %s\n", err)
+	}
+
+	if len(snapshot) == 0 {
+		log.Printf("No webhook found with ID: %s\n", webhookID)
+	}
+	// Parse the document data into a WebhookGET struct
+	var webhook resources.WebhookGET
+	if err := snapshot[0].DataTo(&webhook); err != nil {
+		log.Printf("Error parsing data: %s\n", err)
+		return resources.WebhookGET{}, err
+	}
+
+	return webhook, nil
+}
+
+*/

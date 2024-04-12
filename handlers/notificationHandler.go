@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"bytes"
+	"countries-dashboard-service/database"
+	"countries-dashboard-service/functions"
 	"countries-dashboard-service/resources"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -12,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // Initialize signature (via init())
@@ -20,13 +23,7 @@ var SignatureKey = "X-SIGNATURE"
 // var Mac hash.Hash
 var Secret []byte
 
-// Firebase will replace this variable
-var webhooks = []resources.WebhookPOST{}
-
-/*
-Handles webhook registration (POST) and lookup (GET) requests.
-Expects WebhookPOST struct body in request.
-*/
+// Handles webhook registration (POST), lookup (GET) requests and deletion (DELETE) requests.
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -34,28 +31,135 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		webhook := resources.WebhookPOST{}
 		err := json.NewDecoder(r.Body).Decode(&webhook)
 		if err != nil {
-			http.Error(w, "Something went wrong: "+err.Error(), http.StatusBadRequest)
+			http.Error(w, "Something went wrong during decoding: "+err.Error(), http.StatusBadRequest)
 		}
-		webhooks = append(webhooks, webhook)
-		// Note: Approach does not guarantee persistence or permanence of resource id (for CRUD)
-		log.Println("Webhook " + webhook.URL + " has been registered.")
-		// Print index of recorded webhook as response - note: in practice you would return some unique identifier, not exposing DB internals
-		http.Error(w, strconv.Itoa(len(webhooks)-1), http.StatusCreated)
-	case http.MethodGet:
-		// For now just return all webhooks, don't respond to specific resource requests
-		err := json.NewEncoder(w).Encode(webhooks)
+
+		// Generate ID and assign it to webhook struct
+		id := functions.GenerateID()
+		err = functions.AddWebhook(id, webhook)
 		if err != nil {
-			http.Error(w, "Something went wrong: "+err.Error(), http.StatusInternalServerError)
+			log.Println("handle the error", err)
 		}
+
+		// Generate response from id
+		response := resources.WebhookPOSTResponse{ID: id}
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			http.Error(w, "Something went during encoding: "+err.Error(), http.StatusBadRequest)
+		}
+		log.Println("Webhook with url " + webhook.URL + " and ID " + id + " has been registered.")
+
+	case http.MethodGet:
+		webhookRequestGET(w, r)
+	case http.MethodDelete:
+		webhookRequestDELETE(w, r)
 	default:
 		http.Error(w, "Method "+r.Method+" not supported for "+resources.NOTIFICATIONS_PATH, http.StatusMethodNotAllowed)
 	}
+}
+
+// webhookRequestGET handles the HTTP GET request for webhooks stored in the Firestore database.
+// It is possible to get all documents at once by calling /dashboard/v1/notifications/ .
+// For getting specific entries /dashboard/v1/registrations/{id} is used.
+func webhookRequestGET(w http.ResponseWriter, r *http.Request) {
+	client := database.GetFirestoreClient()
+	ctx := database.GetFirestoreContext()
+
+	// Retrieve the 4th url-part that contains the id.
+	urlParts := strings.Split(r.URL.Path, "/")
+	id := urlParts[4]
+
+	// Check if the query does not contain an id.
+	if id == "" {
+		// Fetch all the documents in the  firestore database and handle the error that it returns.
+		webhookResponses, err1 := functions.GetAllWebhooks(ctx, client)
+		if err1 != nil {
+			http.Error(w, "Could not retrieve all documents.", http.StatusInternalServerError)
+			return
+		}
+		// Write the response using the standardResponseWriter
+		standardResponseWriter(w, webhookResponses)
+		return
+	}
+
+	//var webhookResponses []resources.WebhookGET
+	var notFoundIds []string
+	webhookResponse, err := functions.GetWebhook(id)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	/*
+
+		// Splits the specified ids in the URL with a comma, and returns the document for each of the corresponding ids.
+		// Each found document is then added to the registrationResponses array.
+		registrationIds := strings.Split(id, ",")
+		for _, registrationId := range registrationIds {
+			webhookResponse, err2 := functions.CreateWebhookGET(ctx, client, registrationId)
+			// Checks is the id is in the notFoundIds array by checking the error from the CreateRegistrationsGET function.
+			// If the error is not nil it gets appended to the notFoundIds array.
+			if err2 != nil {
+				notFoundIds = append(notFoundIds, registrationId)
+			}
+			webhookResponses = append(webhookResponses, webhookResponse)
+		}
+
+	*/
+
+	// Returns an error if the notFoundIds array is longer than 0.
+	if len(notFoundIds) > 0 {
+		http.Error(w, "Registration id(s) "+strings.Join(notFoundIds, ", ")+
+			" could not be found.", http.StatusNotFound)
+		return
+	}
+
+	// Writes the response using the standardResponseWriter.
+	standardResponseWriter(w, webhookResponse)
+}
+
+// webhookRequestDELETE handles HTTP DELETE requests for deleting webhooks.
+// It retrieves the webhook id from the URL, deletes the corresponding document from the database,
+// and returns a response indicating success or failure.
+func webhookRequestDELETE(w http.ResponseWriter, r *http.Request) {
+	client := database.GetFirestoreClient()
+	ctx := database.GetFirestoreContext()
+
+	// Retrieve the 4th url-part that contains the id.
+	urlParts := strings.Split(r.URL.Path, "/")
+	id := urlParts[4]
+
+	// Check if the query does not contain an id.
+	if id == "" {
+		log.Println("No id(s) were specified in this query.")
+		http.Error(w, "No id(s) were specified in this query, please write an "+
+			"integer number in the query to use this service.", http.StatusBadRequest)
+		return
+	}
+
+	response, err := functions.DeleteWebhook(ctx, client, id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("Error deleting webhook: %v\n", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, "Something went wrong: "+err.Error(), http.StatusBadRequest)
+	}
+	log.Println("Webhook with id: " + id + " has been deleted from the database.")
+	http.Error(w, "The requested webhook were successfully deleted from the database.", http.StatusNoContent)
+
 }
 
 /*
 Invokes the web service to trigger event. Currently only responds to POST requests.
 */
 func ServiceHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := database.GetFirestoreContext()
+	client := database.GetFirestoreClient()
 	str, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal("Error during decoding message content. Error: " + string(str))
@@ -65,6 +169,10 @@ func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 		// Plasser andre metoder her
 		log.Println("Received POST request...")
 		// Iterate through registered webhooks and invoke based on registered URL, method, and with received content
+		var webhooks, _ = functions.GetAllWebhooks(ctx, client)
+		if err != nil {
+			log.Println("Handle this error later", err)
+		}
 		for _, v := range webhooks {
 			log.Println("Trigger event: Call to service endpoint with method " + v.Event +
 				" and content '" + string(str) + "'.")
