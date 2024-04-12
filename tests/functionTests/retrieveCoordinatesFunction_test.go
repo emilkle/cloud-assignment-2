@@ -1,4 +1,4 @@
-package dashboardTests
+package functionTests
 
 import (
 	"countries-dashboard-service/functions/dashboards"
