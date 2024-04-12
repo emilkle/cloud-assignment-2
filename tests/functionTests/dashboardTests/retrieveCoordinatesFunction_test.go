@@ -1,4 +1,4 @@
-package functionTests
+package dashboardTests
 
 import (
 	"countries-dashboard-service/functions/dashboards"
@@ -9,6 +9,7 @@ import (
 	"testing"
 )
 
+// TestRetrieveCoordinates tests the RetrieveCoordinates function without making a real HTTP request to a rest API.
 func TestRetrieveCoordinates(t *testing.T) {
 	// Create a local test server to simulate a successful HTTP response i.e. the mockJSONResponse.
 	// A HTTP request will respond the mockJSONResponse
@@ -31,15 +32,15 @@ func TestRetrieveCoordinates(t *testing.T) {
 	}))
 	defer tsServerError.Close()
 
-	// Define your test cases
+	// Struct for different test cases
 	tests := []struct {
-		name           string
-		country        string
-		id             int
-		runTest        bool
-		testServer     *httptest.Server
-		expectedResult resources.CoordinatesValues
-		expectedError  string
+		name           string                      // Name of the test
+		country        string                      // Parameter needed by the RetrieveCoordinates function
+		id             int                         // Parameter needed by the RetrieveCoordinates function
+		runTest        bool                        // Flag variable for identifying whether the RetrieveCoordinates function is to be tested or not
+		testServer     *httptest.Server            // Reference to the test server
+		expectedResult resources.CoordinatesValues // The expected result returned by RetrieveCoordinates function from the test
+		expectedError  string                      // The expected error from the test
 	}{
 		{
 			name:       "Successful Retrieval",

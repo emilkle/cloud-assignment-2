@@ -34,7 +34,7 @@ func TestRetrieveCapitalPopulationAndArea(t *testing.T) {
 		name           string                          // Name of the test
 		isoCode        string                          // Variable needed by the RetrieveCapitalPopulationAndArea function
 		id             int                             // Variable needed by the RetrieveCapitalPopulationAndArea function
-		runTest        bool                            // Flag variable for identifying whether the RetrieveCapitalPopulationAndArea is tested or not
+		runTest        bool                            // Flag variable for identifying whether the RetrieveCapitalPopulationAndArea is to be tested or not
 		testServer     *httptest.Server                // Reference to the test server
 		expectedResult resources.CapitalPopulationArea // The expected result returned by RetrieveCapitalPopulationAndArea from the test
 		expectedError  string                          // The expected error from the test
