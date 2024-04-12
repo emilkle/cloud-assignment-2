@@ -27,29 +27,7 @@ var Secret []byte
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		// Expects incoming body in terms of WebhookPOST struct
-		webhook := resources.WebhookPOST{}
-		err := json.NewDecoder(r.Body).Decode(&webhook)
-		if err != nil {
-			http.Error(w, "Something went wrong during decoding: "+err.Error(), http.StatusBadRequest)
-		}
-
-		// Generate ID and assign it to webhook struct
-		id := functions.GenerateID()
-		err = functions.AddWebhook(id, webhook)
-		if err != nil {
-			log.Println("handle the error", err)
-		}
-
-		// Generate response from id
-		response := resources.WebhookPOSTResponse{ID: id}
-		w.Header().Set("Content-Type", "application/json")
-		err = json.NewEncoder(w).Encode(response)
-		if err != nil {
-			http.Error(w, "Something went during encoding: "+err.Error(), http.StatusBadRequest)
-		}
-		log.Println("Webhook with url " + webhook.URL + " and ID " + id + " has been registered.")
-
+		webhookRequestPOST(w, r)
 	case http.MethodGet:
 		webhookRequestGET(w, r)
 	case http.MethodDelete:
@@ -57,6 +35,33 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method "+r.Method+" not supported for "+resources.NOTIFICATIONS_PATH, http.StatusMethodNotAllowed)
 	}
+}
+
+// webhookRequesPOST handles the HTTP GET request for webhooks stored in the Firestore database.
+// It is possible to get all documents at once by calling /dashboard/v1/notifications/ .
+// For getting specific entries /dashboard/v1/registrations/{id} is used.
+func webhookRequestPOST(w http.ResponseWriter, r *http.Request) {
+	webhook := resources.WebhookPOST{}
+	err := json.NewDecoder(r.Body).Decode(&webhook)
+	if err != nil {
+		http.Error(w, "Something went wrong during decoding: "+err.Error(), http.StatusBadRequest)
+	}
+
+	// Generate ID and assign it to webhook struct
+	id := functions.GenerateID()
+	err = functions.AddWebhook(id, webhook)
+	if err != nil {
+		log.Println("handle the error", err)
+	}
+
+	// Generate response from id
+	response := resources.WebhookPOSTResponse{ID: id}
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, "Something went during encoding: "+err.Error(), http.StatusBadRequest)
+	}
+	log.Println("Webhook with url " + webhook.URL + " and ID " + id + " has been registered.")
 }
 
 // webhookRequestGET handles the HTTP GET request for webhooks stored in the Firestore database.
