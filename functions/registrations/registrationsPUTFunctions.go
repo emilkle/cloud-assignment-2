@@ -55,28 +55,36 @@ func GetDocumentID(ctx context.Context, client *firestore.Client,
 // It takes the provided data, constructs an update request, and updates the document in the database.
 func CreatePUTRequest(ctx context.Context, client *firestore.Client, w http.ResponseWriter,
 	data resources.RegistrationsPOSTandPUT, documentID string) {
-	putRegistration := map[string]interface{}{
-		"country": data.Country,
-		"isoCode": data.IsoCode,
-		"features": map[string]interface{}{
-			"temperature":      data.Features.Temperature,
-			"precipitation":    data.Features.Precipitation,
-			"capital":          data.Features.Capital,
-			"coordinates":      data.Features.Coordinates,
-			"population":       data.Features.Population,
-			"area":             data.Features.Area,
-			"targetCurrencies": data.Features.TargetCurrencies,
-		},
-		"lastChange": time.Now().Format("20060102 15:04"), // Update lastChange timestamp.
-	}
 
-	// Update the document in Firestore.
-	_, err3 := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentID).Set(ctx,
-		putRegistration, firestore.MergeAll)
+	err := ValidateDataTypes(data, w)
+	if err != nil {
+		log.Println("The document has incorrect datatypes:", err.Error())
+		http.Error(w, "The input datatypes or document structure is incorrect. Please use the following"+
+			"format to update a document: "+resources.JSON_STRUCT_POST_AND_PUT, http.StatusInternalServerError)
+	} else {
+		putRegistration := map[string]interface{}{
+			"country": data.Country,
+			"isoCode": data.IsoCode,
+			"features": map[string]interface{}{
+				"temperature":      data.Features.Temperature,
+				"precipitation":    data.Features.Precipitation,
+				"capital":          data.Features.Capital,
+				"coordinates":      data.Features.Coordinates,
+				"population":       data.Features.Population,
+				"area":             data.Features.Area,
+				"targetCurrencies": data.Features.TargetCurrencies,
+			},
+			"lastChange": time.Now().Format("20060102 15:04"), // Update lastChange timestamp.
+		}
 
-	if err3 != nil {
-		log.Println("The lastChange field could not be changed: ", err3.Error())
-		http.Error(w, "An error occurred when changing the last change"+
-			" timestamp of the registration, Please try again. ", http.StatusInternalServerError)
+		// Update the document in Firestore.
+		_, err3 := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentID).Set(ctx,
+			putRegistration, firestore.MergeAll)
+
+		if err3 != nil {
+			log.Println("The lastChange field could not be changed: ", err3.Error())
+			http.Error(w, "An error occurred when changing the last change"+
+				" timestamp of the registration, Please try again. ", http.StatusInternalServerError)
+		}
 	}
 }

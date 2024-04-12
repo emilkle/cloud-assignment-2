@@ -37,6 +37,9 @@ func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 // getting specific entries in specific orders, or by
 // using /dashboard/v1/registrations/ to get all documents.
 func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
+	client := database.GetFirestoreClient()
+	ctx := database.GetFirestoreContext()
+
 	// Retrieve the 4th url-part that contains the id.
 	urlParts := strings.Split(r.URL.Path, "/")
 	id := urlParts[4]
@@ -44,7 +47,7 @@ func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
 	// Check if the query does not contain an id.
 	if id == "" {
 		// Fetch all the documents in the  firestore database and handle the error that it returns.
-		registrationsResponses, err1 := registrations.GetAllRegisteredDocuments()
+		registrationsResponses, err1 := registrations.GetAllRegisteredDocuments(ctx, client)
 		if err1 != nil {
 			http.Error(w, "Could not retrieve all documents.", http.StatusInternalServerError)
 			return
@@ -61,7 +64,7 @@ func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
 	// Each found document is then added to the registrationResponses array.
 	registrationIds := strings.Split(id, ",")
 	for _, registrationId := range registrationIds {
-		registrationsResponse, err2 := registrations.CreateRegistrationsGET(registrationId)
+		registrationsResponse, err2 := registrations.CreateRegistrationsGET(ctx, client, registrationId)
 		// Checks is the id is in the notFoundIds array by checking the error from the CreateRegistrationsGET function.
 		// If the error is not nil it gets appended to the notFoundIds array.
 		if err2 != nil {
@@ -85,7 +88,6 @@ func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
 // It decodes the incoming request body into a Registration struct, creates a new document in the database,
 // and returns a response indicating success or failure.
 func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
-	// Get Firestore client and context.
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
@@ -116,7 +118,7 @@ func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create response and write to the response body.
-	postResponse, _ := registrations.CreatePOSTResponse()
+	postResponse, _ := registrations.CreatePOSTResponse(ctx, client)
 	w.WriteHeader(http.StatusCreated)
 	standardResponseWriter(w, postResponse)
 
@@ -128,7 +130,6 @@ func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 // It retrieves the document ID from the URL, decodes the incoming request body into a Registration struct,
 // updates the document in the database, and returns a response indicating success or failure.
 func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
-	// Get Firestore client and context.
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
@@ -150,7 +151,7 @@ func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	if err1 != nil {
 		// Respond with decoding error if unable to decode request body.
 		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the PUT request. Use this structure for your"+
-			" PUT request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusInternalServerError)
+			" PUT request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusForbidden)
 		return
 	}
 
@@ -174,7 +175,6 @@ func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 // It retrieves the document ID(s) from the URL, deletes the corresponding document(s) from the database,
 // and returns a response indicating success or failure.
 func RegistrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
-	// Get Firestore client and context.
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
