@@ -1,12 +1,15 @@
 package handlerTests
 
 import (
+	"bytes"
 	"countries-dashboard-service/handlers"
 	"countries-dashboard-service/resources"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -356,19 +359,123 @@ func Test_RegistrationRequestGET(t *testing.T) {
 }
 
 func Test_RegistrationRequestPOST(t *testing.T) {
-	type args struct {
-		w http.ResponseWriter
-		r *http.Request
+
+	postRequestBody := map[string]interface{}{
+		"country": "Poland",
+		"isoCode": "PL",
+		"features": map[string]interface{}{
+			"temperature":   true,
+			"precipitation": false,
+			"capital":       true,
+			"coordinates":   true,
+			"population":    true,
+			"area":          true,
+			"targetCurrencies": []interface{}{
+				"USD",
+				"EUR",
+			},
+		},
 	}
+
+	postRequestBodyBytes, err1 := json.Marshal(postRequestBody)
+	if err1 != nil {
+		t.Fatalf("failed to marshal payload: %v", err1)
+	}
+
+	//postRequestBodyBytes := bytes.NewBufferString(postRequestBody)
+
+	invalidRequestBody := map[string]interface{}{
+		"country": "Poland",
+		"isoCode": "PL",
+	}
+
+	invalidRequestBodyBytes, err1 := json.Marshal(invalidRequestBody)
+	if err1 != nil {
+		t.Fatalf("failed to marshal payload: %v", err1)
+	}
+
+	postResponseBody := `{
+		"id":         4,
+		"lastChange": "20240329 15:41",
+	}`
+
+	postResponseBodyBytes := bytes.NewBufferString(postResponseBody)
+
+	invalidResponse := "Invalid request body format"
+
+	/*
+		postResponseBodyBytes, err2 := json.Marshal(postResponseBody)
+		if err2 != nil {
+			t.Fatalf("failed to marshal payload: %v", err2)
+		}*/
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		var receivedPostRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&receivedPostRequestBody); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+
+		if reflect.DeepEqual(receivedPostRequestBody, postRequestBody) {
+			w.WriteHeader(http.StatusCreated)
+			w.Write(postResponseBodyBytes.Bytes())
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Invalid request body format"))
+		}
+
+	}))
+	defer mockServer.Close()
+
 	tests := []struct {
-		name string
-		args args
+		name         string
+		method       string
+		path         string
+		payload      []byte
+		expectedBody string
+		expectedCode int
 	}{
 		// TODO: Add test cases.
+		{
+			name:         "Add a new registration",
+			method:       http.MethodPost,
+			path:         resources.REGISTRATIONS_PATH,
+			payload:      postRequestBodyBytes,
+			expectedBody: postResponseBody,
+			expectedCode: http.StatusCreated,
+		},
+		{
+			name:         "Wrong request format",
+			method:       http.MethodPost,
+			path:         resources.REGISTRATIONS_PATH,
+			payload:      invalidRequestBodyBytes,
+			expectedBody: invalidResponse,
+			expectedCode: http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handlers.RegistrationRequestPOST(tt.args.w, tt.args.r)
+			resp, err := http.Post(mockServer.URL, "application/json", bytes.NewBuffer(tt.payload))
+			if err != nil {
+				t.Fatalf("failed to send POST request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			var responseBodyBuffer bytes.Buffer
+			_, err = responseBodyBuffer.ReadFrom(resp.Body)
+			if err != nil {
+				t.Fatalf("failed to read response body: %v", err)
+			}
+			responseBody := responseBodyBuffer.String()
+
+			if responseBody != tt.expectedBody {
+				t.Errorf("Expected response: %s but got %s",
+					tt.expectedBody, responseBody)
+			}
+
+			if resp.StatusCode != tt.expectedCode {
+				t.Errorf("Expected status code %d but got %d.", tt.expectedCode, resp.StatusCode)
+			}
 		})
 	}
 }
