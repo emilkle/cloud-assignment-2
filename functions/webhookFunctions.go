@@ -80,6 +80,7 @@ func DeleteWebhook(ctx context.Context, client *firestore.Client, structID strin
 	return &resources.WebhookPOSTResponse{ID: structID}, nil
 }
 
+// GetAllWebhooks gets all webhooks from database
 func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.WebhookGET, error) {
 	// Iterate over documents in ascending order of lastChange timestamp.
 	iter := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx)

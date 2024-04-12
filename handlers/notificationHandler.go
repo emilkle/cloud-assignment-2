@@ -23,7 +23,7 @@ var SignatureKey = "X-SIGNATURE"
 // var Mac hash.Hash
 var Secret []byte
 
-// Handles webhook registration (POST), lookup (GET) requests and deletion (DELETE) requests.
+// WebhookHandler handles webhook registration (POST), lookup (GET) requests and deletion (DELETE) requests.
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
