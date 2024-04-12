@@ -78,44 +78,30 @@ func webhookRequestGET(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Could not retrieve all documents.", http.StatusInternalServerError)
 			return
 		}
-		// Write the response using the standardResponseWriter
-		standardResponseWriter(w, webhookResponses)
+
+		// Write the response
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(webhookResponses)
+		if err != nil {
+			http.Error(w, "Something went wrong: "+err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 
 	//var webhookResponses []resources.WebhookGET
-	var notFoundIds []string
-	webhookResponse, err := functions.GetWebhook(id)
+	//var notFoundIds []string
+	webhookResponse, err := functions.GetWebhook(ctx, client, id)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	/*
 
-		// Splits the specified ids in the URL with a comma, and returns the document for each of the corresponding ids.
-		// Each found document is then added to the registrationResponses array.
-		registrationIds := strings.Split(id, ",")
-		for _, registrationId := range registrationIds {
-			webhookResponse, err2 := functions.CreateWebhookGET(ctx, client, registrationId)
-			// Checks is the id is in the notFoundIds array by checking the error from the CreateRegistrationsGET function.
-			// If the error is not nil it gets appended to the notFoundIds array.
-			if err2 != nil {
-				notFoundIds = append(notFoundIds, registrationId)
-			}
-			webhookResponses = append(webhookResponses, webhookResponse)
-		}
-
-	*/
-
-	// Returns an error if the notFoundIds array is longer than 0.
-	if len(notFoundIds) > 0 {
-		http.Error(w, "Registration id(s) "+strings.Join(notFoundIds, ", ")+
-			" could not be found.", http.StatusNotFound)
-		return
+	// Write the response
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(webhookResponse)
+	if err != nil {
+		http.Error(w, "Something went wrong: "+err.Error(), http.StatusBadRequest)
 	}
-
-	// Writes the response using the standardResponseWriter.
-	standardResponseWriter(w, webhookResponse)
 }
 
 // webhookRequestDELETE handles HTTP DELETE requests for deleting webhooks.

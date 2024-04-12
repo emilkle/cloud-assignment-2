@@ -199,53 +199,28 @@ func GetAllWebhooks() ([]resources.WebhookGET, error) {
 */
 
 // Fetches a single webhook from the database
-func GetWebhook(webhookID string) (*resources.WebhookGET, error) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+func GetWebhook(ctx context.Context, client *firestore.Client, webhookID string) (*resources.WebhookGET, error) {
+	ref := client.Collection(resources.WEBHOOK_COLLECTION)
+	query := ref.Where("ID", "==", webhookID).Limit(1)
 
-	collection := client.Collection(resources.WEBHOOK_COLLECTION)
-
-	iter := collection.Documents(ctx)
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Fatalf("Error iteration through documents: %v", err)
-		}
-
-		var webhook resources.WebhookGET
-		if err := doc.DataTo(webhook); err != nil {
-			log.Printf("Failed to parse document data: %v", err)
-		}
-
-		if webhook.ID == webhookID {
-			fmt.Printf("Found document with ID %s\n", webhook.ID)
-			return &webhook, nil
-		}
-	}
-	return nil, nil
-}
-
-/*
-	}
-	snapshot, err := ref.Documents(ctx).GetAll()
+	docs, err := query.Documents(ctx).GetAll()
 	if err != nil {
-		log.Println("Error fetching documents: %s\n", err)
+		return nil, err
 	}
 
-	if len(snapshot) == 0 {
-		log.Printf("No webhook found with ID: %s\n", webhookID)
-	}
-	// Parse the document data into a WebhookGET struct
-	var webhook resources.WebhookGET
-	if err := snapshot[0].DataTo(&webhook); err != nil {
-		log.Printf("Error parsing data: %s\n", err)
-		return resources.WebhookGET{}, err
+	if len(docs) == 0 {
+		return nil, fmt.Errorf("document with webhook ID %s not found", webhookID)
 	}
 
-	return webhook, nil
+	// Extract data from the document
+	var webhookData resources.WebhookGET
+	for _, doc := range docs {
+		if err := doc.DataTo(&webhookData); err != nil {
+			return nil, err
+		}
+		// Since you're using Limit(1), you only expect one document, but just in case, break after processing one.
+		break
+	}
+
+	return &webhookData, nil
 }
-
-*/
