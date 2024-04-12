@@ -80,46 +80,6 @@ func DeleteWebhook(ctx context.Context, client *firestore.Client, structID strin
 	return &resources.WebhookPOSTResponse{ID: structID}, nil
 }
 
-func CreateWebhookGET(ctx context.Context, client *firestore.Client, idParam string) (resources.WebhookGET, error) {
-	// Parse ID parameter to integer.
-	//idNumber, err1 := strconv.Atoi(idParam)
-	//if err1 != nil {
-	//	log.Println("This id could not be parsed, try another id.", err1.Error())
-	//	return resources.WebhookGET{}, err1
-	//}
-
-	// Query Firestore for documents with matching ID.
-	query := client.Collection(resources.WEBHOOK_COLLECTION).Where("id", "==", idParam).Limit(1)
-	documents, err2 := query.Documents(ctx).GetAll()
-	if err2 != nil {
-		log.Println("Failed to fetch documents:", err2)
-		return resources.WebhookGET{}, err2
-	}
-
-	// Check if any documents were found.
-	if len(documents) == 0 {
-		err3 := fmt.Errorf("no document found with ID: %s", idParam)
-		log.Println(err3)
-		return resources.WebhookGET{}, err3
-	}
-
-	// Construct RegistrationsGET struct from retrieved data.
-	for _, document := range documents {
-		data := document.Data()
-
-		return resources.WebhookGET{
-			ID:      idParam,
-			URL:     data["URL"].(string),
-			Country: data["Country"].(string),
-			Event:   data["Event"].(string),
-		}, nil
-	}
-
-	// Print the error message to the server log if the retrieving of the document fails.
-	log.Println("Document with ID", idParam, "was not found.")
-	return resources.WebhookGET{}, nil
-}
-
 func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.WebhookGET, error) {
 	// Iterate over documents in ascending order of lastChange timestamp.
 	iter := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx)
@@ -137,17 +97,6 @@ func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.
 		}
 		data := document.Data()
 
-		// Retrieve the lastChange timestamp from the document.
-		/*
-			lastChange, ok := data["lastChange"].(string)
-			if !ok {
-				log.Printf("The timestamp of the last change"+
-					" %v could not be converted to string.", data["lastChange"])
-				continue
-			}
-
-		*/
-
 		// Construct RegistrationsGET response struct.
 		webhookResponse := resources.WebhookGET{
 			ID:      data["ID"].(string),
@@ -156,47 +105,12 @@ func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.
 			Event:   data["Event"].(string),
 		}
 
-		//registrationID := document.Ref.ID
-
-		// Update all the id fields in for the Firestore documents after deleting a document in the middle of the
-		// ascending order, to ensure that all registration documents will be found.
-		//UpdateId(ctx, client, registrationID, registrationsResponse)
-
 		webhookResponses = append(webhookResponses, webhookResponse)
-
 		idIndex++
 	}
 
 	return webhookResponses, nil
 }
-
-/*
-// Finds and returns all webhooks from database
-func GetAllWebhooks() ([]resources.WebhookGET, error) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
-
-	ref := client.Collection(resources.WEBHOOK_COLLECTION)
-
-	docs, err := ref.Documents(ctx).GetAll()
-	if err != nil {
-		log.Printf("Error fetching documents: %s\n", err)
-		return nil, err
-	}
-
-	var webhooks []resources.WebhookGET
-
-	for _, doc := range docs {
-		var webhook resources.WebhookGET
-		if err := doc.DataTo(&webhook); err != nil {
-			log.Printf("Error parsing %s", err)
-		}
-		webhooks = append(webhooks, webhook)
-	}
-	return webhooks, nil
-}
-
-*/
 
 // Fetches a single webhook from the database
 func GetWebhook(ctx context.Context, client *firestore.Client, webhookID string) (*resources.WebhookGET, error) {
@@ -221,6 +135,5 @@ func GetWebhook(ctx context.Context, client *firestore.Client, webhookID string)
 		// Since you're using Limit(1), you only expect one document, but just in case, break after processing one.
 		break
 	}
-
 	return &webhookData, nil
 }
