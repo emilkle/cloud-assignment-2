@@ -89,7 +89,7 @@ func TestRetrieveCurrencyExchangeRates(t *testing.T) {
 	}
 }
 
-// Helper function to compare two TargetCurrencyValues maps
+// equalCurrencyValues helper function to compare two TargetCurrencyValues maps
 func equalCurrencyValues(actual, expected resources.TargetCurrencyValues) bool {
 	if len(actual.TargetCurrencies) != len(expected.TargetCurrencies) {
 		return false
