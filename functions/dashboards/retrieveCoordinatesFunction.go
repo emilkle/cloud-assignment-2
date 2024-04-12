@@ -5,20 +5,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 )
 
+// TestUrlRetrieveCoordinates variable used for testing the RetrieveCoordinates function
+var TestUrlRetrieveCoordinates string
+
 // RetrieveCoordinates Retrieves the country coordinates for a dashboard
-func RetrieveCoordinates(country string, id int) (resources.CoordinatesValues, error) {
+func RetrieveCoordinates(country string, id int, runTest bool) (resources.CoordinatesValues, error) {
 	// Variable used in error message for HttpRequest function.
 	fetching := "coordinates"
 
 	// Construct URL
-	url := fmt.Sprintf(resources.GEOCODING_METEO+"/search?name=%s&count=1&language=en&format=json", country)
+	var urlPath = fmt.Sprintf(resources.GEOCODING_METEO+"/search?name=%s&count=1&language=en&format=json", country)
+	url := ConstructUrlForApiOrTest(urlPath, TestUrlRetrieveCoordinates, runTest)
 
 	// Make HTTP request to specified URL
 	response, err := HttpRequest(url, fetching, id)
 	// Defer close of response body
 	defer CloseResponseBody(response.Body, fetching, id)
+
+	// Check status code of response
+	if response.StatusCode != http.StatusOK {
+		return resources.CoordinatesValues{}, fmt.Errorf("HTTP error: %s", response.Status)
+	}
 
 	// Decode the JSON response
 	var coordinatesResponse resources.CoordinatesResponse

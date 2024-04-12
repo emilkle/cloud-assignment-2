@@ -49,6 +49,7 @@ type StatusResponse struct {
 
 //###############################################################################
 
+// DashboardsGet struct for the dashboard response
 type DashboardsGet struct {
 	Country       string        `json:"country"`
 	IsoCode       string        `json:"isoCode"`
@@ -56,6 +57,7 @@ type DashboardsGet struct {
 	LastRetrieval string        `json:"last_retrieval"`
 }
 
+// FeatureValues struct for features in a dashboard
 type FeatureValues struct {
 	Temperature      float64            `json:"temperature"`
 	Precipitation    float64            `json:"precipitation"`
@@ -66,16 +68,19 @@ type FeatureValues struct {
 	TargetCurrencies map[string]float64 `json:"target_currencies"`
 }
 
+// ForecastResponse struct for the forecastResponse used to fetch temperature and precipitation for a dashboard
 type ForecastResponse struct {
 	Hourly HourlyData `json:"hourly"`
 }
 
+// HourlyData struct for forecasted time, temperature and precipitation
 type HourlyData struct {
 	Time          []string  `json:"time"`
 	Temperature   []float64 `json:"temperature_2m"`
 	Precipitation []float64 `json:"precipitation"`
 }
 
+// CapitalPopulationArea struct for holding capital, population and area for a dashboard
 type CapitalPopulationArea struct {
 	Capital    []string `json:"capital"`
 	Population int      `json:"population"`
@@ -90,11 +95,13 @@ type CoordinatesResponse struct {
 	} `json:"results"`
 }
 
+// CoordinatesValues struct for latitude and longitude for a dashboard
 type CoordinatesValues struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
 
+// TargetCurrencyValues struct for holding currency values for a dashboard
 type TargetCurrencyValues struct {
 	TargetCurrencies map[string]float64 `json:"target_currencies"`
 }

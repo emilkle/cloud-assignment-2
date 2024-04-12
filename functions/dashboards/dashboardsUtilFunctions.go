@@ -23,3 +23,14 @@ func CloseResponseBody(body io.ReadCloser, fetching string, id int) {
 		log.Printf("failed to close response body while fetching %s for dashboard with ID %d. Error: %s", fetching, id, err)
 	}
 }
+
+// ConstructUrlForApiOrTest checks if a function is to be used for testing or not and constructs the url based on that
+func ConstructUrlForApiOrTest(urlPath, testUrl string, runTest bool) string {
+	url := ""
+	if runTest == false {
+		url = urlPath
+	} else if runTest == true {
+		url = testUrl
+	}
+	return url
+}
