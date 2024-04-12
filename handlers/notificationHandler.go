@@ -37,9 +37,7 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// webhookRequesPOST handles the HTTP GET request for webhooks stored in the Firestore database.
-// It is possible to get all documents at once by calling /dashboard/v1/notifications/ .
-// For getting specific entries /dashboard/v1/registrations/{id} is used.
+// webhookRequestPOST handles the HTTP POST request for webhooks to be stored in the Firestore database.
 func webhookRequestPOST(w http.ResponseWriter, r *http.Request) {
 	webhook := resources.WebhookPOST{}
 	err := json.NewDecoder(r.Body).Decode(&webhook)
