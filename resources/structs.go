@@ -122,6 +122,7 @@ type WebhookPOSTResponse struct {
 	ID string `json:"ID"`
 }
 
+// Remove this struct? Or implement it as response when deleting
 // WebhookDELETEResponse struct for POST response
 type WebhookDELETEResponse struct {
 	ID    string `json:"ID"`

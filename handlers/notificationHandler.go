@@ -27,29 +27,7 @@ var Secret []byte
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		// Expects incoming body in terms of WebhookPOST struct
-		webhook := resources.WebhookPOST{}
-		err := json.NewDecoder(r.Body).Decode(&webhook)
-		if err != nil {
-			http.Error(w, "Something went wrong during decoding: "+err.Error(), http.StatusBadRequest)
-		}
-
-		// Generate ID and assign it to webhook struct
-		id := functions.GenerateID()
-		err = functions.AddWebhook(id, webhook)
-		if err != nil {
-			log.Println("handle the error", err)
-		}
-
-		// Generate response from id
-		response := resources.WebhookPOSTResponse{ID: id}
-		w.Header().Set("Content-Type", "application/json")
-		err = json.NewEncoder(w).Encode(response)
-		if err != nil {
-			http.Error(w, "Something went during encoding: "+err.Error(), http.StatusBadRequest)
-		}
-		log.Println("Webhook with url " + webhook.URL + " and ID " + id + " has been registered.")
-
+		webhookRequestPOST(w, r)
 	case http.MethodGet:
 		webhookRequestGET(w, r)
 	case http.MethodDelete:
@@ -57,6 +35,31 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method "+r.Method+" not supported for "+resources.NOTIFICATIONS_PATH, http.StatusMethodNotAllowed)
 	}
+}
+
+// webhookRequestPOST handles the HTTP POST request for webhooks to be stored in the Firestore database.
+func webhookRequestPOST(w http.ResponseWriter, r *http.Request) {
+	webhook := resources.WebhookPOST{}
+	err := json.NewDecoder(r.Body).Decode(&webhook)
+	if err != nil {
+		http.Error(w, "Something went wrong during decoding: "+err.Error(), http.StatusBadRequest)
+	}
+
+	// Generate ID and assign it to webhook struct
+	id := functions.GenerateID()
+	err = functions.AddWebhook(id, webhook)
+	if err != nil {
+		log.Println("handle the error", err)
+	}
+
+	// Generate response from id
+	response := resources.WebhookPOSTResponse{ID: id}
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, "Something went during encoding: "+err.Error(), http.StatusBadRequest)
+	}
+	log.Println("Webhook with url " + webhook.URL + " and ID " + id + " has been registered.")
 }
 
 // webhookRequestGET handles the HTTP GET request for webhooks stored in the Firestore database.
@@ -78,44 +81,30 @@ func webhookRequestGET(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Could not retrieve all documents.", http.StatusInternalServerError)
 			return
 		}
-		// Write the response using the standardResponseWriter
-		standardResponseWriter(w, webhookResponses)
+
+		// Write the response
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(webhookResponses)
+		if err != nil {
+			http.Error(w, "Something went wrong: "+err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 
 	//var webhookResponses []resources.WebhookGET
-	var notFoundIds []string
-	webhookResponse, err := functions.GetWebhook(id)
+	//var notFoundIds []string
+	webhookResponse, err := functions.GetWebhook(ctx, client, id)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	/*
 
-		// Splits the specified ids in the URL with a comma, and returns the document for each of the corresponding ids.
-		// Each found document is then added to the registrationResponses array.
-		registrationIds := strings.Split(id, ",")
-		for _, registrationId := range registrationIds {
-			webhookResponse, err2 := functions.CreateWebhookGET(ctx, client, registrationId)
-			// Checks is the id is in the notFoundIds array by checking the error from the CreateRegistrationsGET function.
-			// If the error is not nil it gets appended to the notFoundIds array.
-			if err2 != nil {
-				notFoundIds = append(notFoundIds, registrationId)
-			}
-			webhookResponses = append(webhookResponses, webhookResponse)
-		}
-
-	*/
-
-	// Returns an error if the notFoundIds array is longer than 0.
-	if len(notFoundIds) > 0 {
-		http.Error(w, "Registration id(s) "+strings.Join(notFoundIds, ", ")+
-			" could not be found.", http.StatusNotFound)
-		return
+	// Write the response
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(webhookResponse)
+	if err != nil {
+		http.Error(w, "Something went wrong: "+err.Error(), http.StatusBadRequest)
 	}
-
-	// Writes the response using the standardResponseWriter.
-	standardResponseWriter(w, webhookResponse)
 }
 
 // webhookRequestDELETE handles HTTP DELETE requests for deleting webhooks.
