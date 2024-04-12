@@ -1,6 +1,7 @@
-package dashboards
+package dashboardTests
 
 import (
+	"countries-dashboard-service/functions/dashboards"
 	"countries-dashboard-service/resources"
 	"fmt"
 	"net/http"
@@ -84,11 +85,11 @@ func TestRetrieveTempAndPrecipitation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set the test URL if the runTest flag is true to use the mock HTTP server
 			if tt.runTest {
-				TestUrlRetrieveTempAndPrecipitation = tt.testServer.URL
+				dashboards.TestUrlRetrieveTempAndPrecipitation = tt.testServer.URL
 			}
 
 			// Call RetrieveTempAndPrecipitation function using the values from the test cases
-			result, err := RetrieveTempAndPrecipitation(tt.latitude, tt.longitude, tt.id, tt.runTest)
+			result, err := dashboards.RetrieveTempAndPrecipitation(tt.latitude, tt.longitude, tt.id, tt.runTest)
 
 			// Check for an unexpected error
 			if (err != nil) != (tt.expectedError != "") {
