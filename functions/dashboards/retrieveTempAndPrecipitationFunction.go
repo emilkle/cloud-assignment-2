@@ -15,13 +15,9 @@ var TestUrlRetrieveTempAndPrecipitation string
 func RetrieveTempAndPrecipitation(latitude, longitude float64, id int, runTest bool) (resources.HourlyData, error) {
 	fetching := "temp and precipitation"
 
-	var url string
 	// Construct URL
-	if runTest == false {
-		url = fmt.Sprintf(resources.METEO_TEMP_PERCIP+"/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
-	} else if runTest == true {
-		url = TestUrlRetrieveCoordinates
-	}
+	var urlPath = fmt.Sprintf(resources.METEO_TEMP_PERCIP+"/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
+	url := ConstructUrlForApiOrTest(urlPath, TestUrlRetrieveTempAndPrecipitation, runTest)
 
 	// Make HTTP request to specified URL
 	response, err := HttpRequest(url, fetching, id)

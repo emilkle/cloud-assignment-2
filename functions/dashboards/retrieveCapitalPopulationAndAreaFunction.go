@@ -16,13 +16,9 @@ func RetrieveCapitalPopulationAndArea(isoCode string, id int, runTest bool) (res
 	// Variable used in error message for HttpRequest function.
 	fetching := "capital, population and area"
 
-	var url string
 	// Construct URL
-	if runTest == false {
-		url = fmt.Sprintf(resources.REST_COUNTRIES_PATH+"/alpha/%s", isoCode)
-	} else if runTest == true {
-		url = TestUrlRetrieveCapitalPopulationAndArea
-	}
+	var urlPath = fmt.Sprintf(resources.REST_COUNTRIES_PATH+"/alpha/%s", isoCode)
+	url := ConstructUrlForApiOrTest(urlPath, TestUrlRetrieveCapitalPopulationAndArea, runTest)
 
 	// Make HTTP request to specified URL
 	response, err := HttpRequest(url, fetching, id)

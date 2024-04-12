@@ -16,13 +16,9 @@ func RetrieveCurrencyExchangeRates(id int, runTest bool) (resources.TargetCurren
 	// Variable used in error message for HttpRequest function.
 	fetching := "exchange rates"
 
-	var url string
 	// Construct URL
-	if runTest == false {
-		url = resources.CURRENCY_PATH + "NOK"
-	} else if runTest == true {
-		url = TestUrlRetrieveCurrencyExchangeRates
-	}
+	var urlPath = resources.CURRENCY_PATH + "NOK"
+	url := ConstructUrlForApiOrTest(urlPath, TestUrlRetrieveCurrencyExchangeRates, runTest)
 
 	// Make HTTP request to specified URL
 	response, err := HttpRequest(url, fetching, id)
