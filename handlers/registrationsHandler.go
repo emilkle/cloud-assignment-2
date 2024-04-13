@@ -105,7 +105,7 @@ func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 	if err1 != nil {
 		// Respond with decoding error if unable to decode request.
 		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the POST request. Use this structure for your"+
-			" POST request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusInternalServerError)
+			" POST request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusForbidden)
 		return
 	}
 
@@ -159,7 +159,7 @@ func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	documentID, err2 := registrations.GetDocumentID(ctx, client, id)
 	if err2 != nil {
 		// Respond with error if unable to get document ID.
-		http.Error(w, "Error when updating the field(s) of the given document.", http.StatusInternalServerError)
+		http.Error(w, "Unable to get the document ID of the given document.", http.StatusInternalServerError)
 		return
 	}
 
