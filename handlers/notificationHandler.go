@@ -169,7 +169,7 @@ func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		// Edit in the correct constant when done implementing webhooks
-		http.Error(w, "Method "+r.Method+" not supported for "+resources.TEMP_WEBHOOK_INV, http.StatusMethodNotAllowed)
+		http.Error(w, "Method "+r.Method+" not supported for "+resources.WebhookInv, http.StatusMethodNotAllowed)
 	}
 }
 
@@ -228,7 +228,7 @@ func DefaultServerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Prepare output returned to client
 	output := "This service offers the following endpoints: <br>The " + resources.NOTIFICATIONS_PATH + " endpoint provides the registration functionality for webhooks (" + http.MethodPost + " and " + http.MethodGet + "), <br>The " +
-		resources.TEMP_WEBHOOK_INV + " endpoint triggers the invocation of registered webhooks when called (with arbitrary payload)." +
+		resources.WebhookInv + " endpoint triggers the invocation of registered webhooks when called (with arbitrary payload)." +
 		"<br>The payload structure for the webhook registration via " +
 		http.MethodPost + " is the following JSON structure: {\"url\": \"http://targetHost:targetPort/pathTobeInvoked\", \"event\": \"POST\"}<br>" +
 		"Please see the associated Readme for more information."
