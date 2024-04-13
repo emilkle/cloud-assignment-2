@@ -2,22 +2,26 @@ package functions
 
 import (
 	"fmt"
-	"io"
 	"net/http"
+	"time"
 )
 
+// CheckEndpointStatus checks and returns the status of an endpoint.
+// If the endpoint does not respond within 10 seconds it is timed out
 func CheckEndpointStatus(url string) int {
-	statusResponse, err := http.Get(url)
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+	response, err := client.Get(url)
 	if err != nil {
+		fmt.Printf("HTTP request failed: %v\n", err)
 		return http.StatusServiceUnavailable
 	}
-	defer func(Body io.ReadCloser) {
+	defer func() {
+		err := response.Body.Close()
 		if err != nil {
-			err := Body.Close()
-			if err != nil {
-				fmt.Printf("failed to close response body from endpoint: %s, during status check. %v", url, err)
-			}
+			fmt.Printf("Failed to close response body: %v\n", err)
 		}
-	}(statusResponse.Body)
-	return statusResponse.StatusCode
+	}()
+	return response.StatusCode
 }
