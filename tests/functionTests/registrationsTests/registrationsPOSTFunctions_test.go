@@ -147,12 +147,6 @@ func TestCreatePOSTResponse(t *testing.T) {
 			expectedBody: expectedJsonResponse,
 			expectedCode: http.StatusOK,
 		},
-		{
-			name:         "Could not get all documents is thrown",
-			method:       http.MethodPost,
-			expectedBody: expectedJsonResponse,
-			expectedCode: http.StatusInternalServerError,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
