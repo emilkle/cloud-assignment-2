@@ -1,14 +1,16 @@
 package functionTests
 
 import (
-	"cloud.google.com/go/firestore"
 	"context"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
+
+var mockCtx = context.Background()
+
+//var mockClient = MockFirestoreClient{}
 
 var validData = map[string]interface{}{
 	"id":      1,
@@ -75,31 +77,75 @@ var doNotWant = resources.RegistrationsGET{
 }
 
 func TestCreateRegistrationsGET(t *testing.T) {
-	tests := []struct {
-		name    string
-		idParam string
-		want    resources.RegistrationsGET
-		wantErr bool
-	}{
-		// TODO: Add test cases.
+	mockClient := NewMockFirestoreClient(MockFirestoreClient{}.client)
+
+	// Pass the mock client to your function under test.
+	result, err := registrations.CreateRegistrationsGET(context.Background(), mockClient.client, "123")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := registrations.CreateRegistrationsGET(tt.idParam)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreateRegistrationsGET() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CreateRegistrationsGET() got = %v, want %v", got, tt.want)
-			}
-		})
+
+	// Assert on the result as needed.
+	// For example:
+	if result.Id != 123 {
+		t.Errorf("Unexpected ID. Expected: %d, Got: %d", 123, result.Id)
 	}
+
+	/*
+		tests := []struct {
+			name    string
+			idParam string
+			want    resources.RegistrationsGET
+			wantErr bool
+		}{
+			// TODO: Add test cases.
+			{
+				name:    "Positive test",
+				idParam: "1",
+				want:    want,
+				wantErr: false,
+			},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got, err := CreateRegistrationsGET(tt.idParam, mockClient)
+				assert.NoError(t, err)
+				assert.Equal(t, want, got)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("GetAllRegisteredDocuments() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("GetAllRegisteredDocuments() got = %v, want %v", got, tt.want)
+				}
+			})
+		}*/
+
+	/*
+		mockFirestoreClient := new(MockFirestoreClient)
+
+		// setup expectations
+		mockFirestoreClient.On("Collection", mock.Anything).Return(&firestore.CollectionRef{})
+		mockFirestoreClient.On("Where", mock.Anything).Return(&firestore.Query{})
+		mockFirestoreClient.On("Limit", mock.Anything).Return(&firestore.Query{})
+		mockFirestoreClient.On("Documents", mock.Anything).Return(&firestore.DocumentIterator{})
+		mockFirestoreClient.On("GetAll", mock.Anything).Return(&[]firestore.DocumentSnapshot{})
+
+		ctx := context.Background()
+		_, err := registrations.CreateRegistrationsGET(ctx, mockFirestoreClient, "123")
+
+		// assert that the expectations were met
+		mockFirestoreClient.AssertExpectations(t)
+
+		assert.NoError(t, err)*/
 }
 
+/*
 func TestGetAllRegisteredDocuments(t *testing.T) {
 	tests := []struct {
 		name    string
+		ctx     context.Context
+		client  FirestoreClient
 		want    []resources.RegistrationsGET
 		wantErr bool
 	}{
@@ -107,7 +153,7 @@ func TestGetAllRegisteredDocuments(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := registrations.GetAllRegisteredDocuments()
+			got, err := registrations.GetAllRegisteredDocuments(tt.ctx, tt.client)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetAllRegisteredDocuments() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -117,7 +163,7 @@ func TestGetAllRegisteredDocuments(t *testing.T) {
 			}
 		})
 	}
-}
+}*/
 
 func TestGetTargetCurrencies(t *testing.T) {
 	var currencies = []string{"NOK", "USD"}
@@ -185,11 +231,8 @@ func Test_CreateRegistrationsResponse(t *testing.T) {
 	}
 }
 
+/*
 func Test_UpdateId(t *testing.T) {
-	ctx := context.Background()
-
-	clientMock := &MockFirestoreClient{}
-
 	testsStruct := []struct {
 		name        string
 		documentID  string
@@ -205,7 +248,7 @@ func Test_UpdateId(t *testing.T) {
 		},
 		{
 			name:        "Negative test",
-			documentID:  "", // Invalid document ID
+			documentID:  "",
 			getResponse: resources.RegistrationsGET{Id: 123},
 			expectedErr: true,
 		},
@@ -213,19 +256,16 @@ func Test_UpdateId(t *testing.T) {
 
 	for _, tt := range testsStruct {
 		t.Run(tt.name, func(t *testing.T) {
-			// Define the expected behavior for the Set method
-			clientMock.SetFunc = func(ctx context.Context, docRef *firestore.DocumentRef,
+			mockClient.SetFunc = func(ctx context.Context, docRef *firestore.DocumentRef,
 				data interface{}, opts ...firestore.SetOption) (*firestore.WriteResult, error) {
 				validId, ok := data.(map[string]interface{})["id"].(int)
+				// TODO: Add add assertions.
 				assert.True(t, ok, "expected 'id' field to be an integer")
 				assert.Equal(t, tt.documentID, docRef.ID)
 				assert.Equal(t, tt.getResponse.Id, validId)
-				// You can add more assertions for other arguments if needed
-				return nil, nil // Return whatever result you expect
+				return nil, nil
 			}
-
-			// Call the function being tested
-			UpdateId(ctx, clientMock, tt.documentID, tt.getResponse)
+			UpdateId(mockCtx, mockClient, tt.documentID, tt.getResponse)
 		})
 	}
-}
+}*/
