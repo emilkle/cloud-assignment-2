@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"cloud.google.com/go/firestore"
 	"countries-dashboard-service/database"
 	"countries-dashboard-service/resources"
 	"fmt"
@@ -10,39 +11,46 @@ import (
 	"time"
 )
 
-// RetrieveDashboardGet returns a single/specific dashboard based on the dashboard ID.
-func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
+// RetrieveDashboardData fetches the dashboard data from Firestore DB
+func RetrieveDashboardData(dashboardId string) ([]*firestore.DocumentSnapshot, int, error) {
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
 
-	// Convert/parse string to integer
 	idNumber, err := strconv.Atoi(dashboardId)
 	if err != nil {
 		log.Printf("Failed to parse ID: %s. Error: %s", dashboardId, err)
-		return resources.DashboardsGet{}, err
+		return nil, 0, err
 	}
-
-	// Make query to the database to return all documents based on the specified ID
 	query := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==", idNumber).Limit(1)
 	documents, err := query.Documents(ctx).GetAll()
 	if err != nil {
 		log.Printf("Failed to fetch documents. Error: %s", err)
+		return nil, 0, err
+	}
+	return documents, idNumber, nil
+}
+
+// RetrieveDashboardGet returns a single/specific dashboard based on the dashboard ID.
+func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
+	documents, idNumber, err := RetrieveDashboardData(dashboardId)
+	if err != nil {
 		return resources.DashboardsGet{}, err
 	}
 
-	// Check if any document with the specified ID were found
 	if len(documents) == 0 {
 		err := fmt.Errorf("no document found with ID: %s", dashboardId)
 		log.Println(err)
 		return resources.DashboardsGet{}, err
 	}
 
-	// Create a timestamp for the last time this dashboard was retrieved
 	var lastRetrieved = time.Now().Format("20060102 15:04")
-
-	// Take only the first document returned by the query
 	data := documents[0].Data()
-	featuresData := data["features"].(map[string]interface{})
+	featuresData, ok := data["features"].(map[string]interface{})
+	if !ok {
+		// Handle the error or continue with a default value
+		log.Println("Error: 'features' is not a valid map[string]interface{}")
+		return resources.DashboardsGet{}, fmt.Errorf("'features' field is missing or not the expected type")
+	}
 
 	// Variables for data in the dashboards
 	var tempAndPrecip resources.HourlyData
@@ -72,7 +80,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 	}
 
 	// Retrieve capital, population and area
-	if featuresData["capital"].(bool) || featuresData["population"].(bool) || featuresData["area"].(bool) {
+	if featuresData["capital"].(bool) || featuresData["copulation"].(bool) || featuresData["area"].(bool) {
 		capitalPopArea, err = RetrieveCapitalPopulationAndArea(data["isoCode"].(string), idNumber, false)
 
 		// Check if dashboard configuration supports capital, population or area
