@@ -8,3 +8,4 @@
 /dataSources/
 /dataSources.local.xml
 database/fb_key.json
+/firestoreEmulator/emulatorFiles/
