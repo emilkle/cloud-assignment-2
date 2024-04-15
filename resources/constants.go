@@ -14,7 +14,7 @@ const GEOCODING_METEO = "https://geocoding-api.open-meteo.com/v1"
 const METEO_TEMP_PERCIP = "https://api.open-meteo.com/v1"
 
 // Webhook invocation during development
-const WebhookInv = "/"
+const WebhookInv = "/invocation/"
 
 // Basic error constants
 const STANDARD_DATATYPE_ERROR = "Incorrect datatype: "

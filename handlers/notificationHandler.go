@@ -148,26 +148,40 @@ func webhookRequestDELETE(w http.ResponseWriter, r *http.Request) {
 Invokes the web service to trigger event. Currently only responds to POST requests.
 */
 func ServiceHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := database.GetFirestoreContext()
-	client := database.GetFirestoreClient()
-
-	str, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal("Error during decoding message content. Error: " + string(str))
-	}
+	log.Println("Servicehandler invoked")
 
 	switch r.Method {
 	case http.MethodPost:
-		var data map[string]interface{}
-		err := json.NewDecoder(r.Body).Decode(&data)
-		if err != nil {
-			log.Fatal("Error decoding request body: ", err)
+		ctx := database.GetFirestoreContext()
+		client := database.GetFirestoreClient()
+
+		webhookRequest := resources.WebhookPOSTRequest{}
+		/*
+			str, err := io.ReadAll(r.Body)
+			log.Println(r.Body)
+			if err != nil {
+				log.Fatal("Error during decoding message content. Error: " + string(str))
+			}
+
+		*/
+		log.Println("so far so good")
+		//var data map[string]interface{}
+		err3 := json.NewDecoder(r.Body).Decode(&webhookRequest)
+		log.Println(r.Body)
+		log.Println(webhookRequest)
+		if err3 != nil {
+			log.Fatal("Error decoding request body: ", err3)
 		}
 
-		urlFromRequest, ok := data["url"].(string)
-		if !ok {
-			log.Fatal("Missing 'url' field in request body")
-		}
+		urlFromRequest := webhookRequest.URL
+		/*
+			, ok := data["URL"].(string)
+
+			if !ok {
+				log.Fatal("Missing 'url' field in request body")
+			}
+
+		*/
 
 		var webhooks, err2 = functions.GetAllWebhooks(ctx, client)
 		if err2 != nil {
@@ -176,20 +190,23 @@ func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var matchingWebhook *resources.WebhookGET
+		var matchingWebhooks []*resources.WebhookGET
 		for _, v := range webhooks {
 			if v.URL == urlFromRequest {
-				matchingWebhook = &v
+				matchingWebhooks = append(matchingWebhooks, &v)
 				break
 			}
 		}
 
-		if matchingWebhook == nil {
+		if matchingWebhooks == nil {
 			log.Println("No matching webhook found for URL: ", urlFromRequest)
 			http.Error(w, "No matching webhook found", http.StatusNotFound)
 			return
 		}
-		go CallUrl(matchingWebhook.URL, matchingWebhook.Event, string(str), matchingWebhook, w)
+		for _, webhook := range matchingWebhooks {
+			go CallUrl(webhook.URL, webhook.Event, urlFromRequest, webhook, w)
+			log.Println("Calling CallUrl")
+		}
 
 		/*
 			log.Println("Received POST request...")
