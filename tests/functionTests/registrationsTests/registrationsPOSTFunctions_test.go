@@ -1,14 +1,13 @@
 package registrationsTests
 
 import (
-	"cloud.google.com/go/firestore"
-	"context"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -243,22 +242,62 @@ func TestCreatePOSTResponse(t *testing.T) {
 }
 
 func TestUpdatePOSTRequest(t *testing.T) {
-	type args struct {
-		ctx          context.Context
-		client       *firestore.Client
-		w            http.ResponseWriter
+	SetupFirestoreDatabase()
+
+	var postRegistration = map[string]interface{}{
+		"country": "Denmark",
+		"isoCode": "DK",
+		"features": map[string]interface{}{
+			"temperature":      true,
+			"precipitation":    true,
+			"capital":          true,
+			"coordinates":      true,
+			"population":       true,
+			"area":             false,
+			"targetCurrencies": []interface{}{"EUR", "USD", "SEK"},
+		},
+	}
+
+	newDocumentRef, _, err1 := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Add(emulatorCtx,
+		postRegistration)
+	if err1 != nil {
+		log.Println("An error occurred when creating a new document:", err1.Error())
+	}
+
+	postResponse := resources.RegistrationsPOSTResponse{
+		Id:         3,
+		LastChange: "20240405 18:07",
+	}
+
+	documentID := newDocumentRef.ID
+
+	tests := []struct {
+		name         string
 		documentID   string
 		postResponse resources.RegistrationsPOSTResponse
-	}
-	tests := []struct {
-		name string
-		args args
+		expectedCode int
 	}{
 		// TODO: Add test cases.
+		{
+			name:         "The POST request body was successfully updated",
+			documentID:   documentID,
+			postResponse: postResponse,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "The lastChange and id fields could not be updated",
+			documentID:   "",
+			postResponse: postResponse,
+			expectedCode: http.StatusInternalServerError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			registrations.UpdatePOSTRequest(tt.args.ctx, tt.args.client, tt.args.w, tt.args.documentID, tt.args.postResponse)
+			w := httptest.NewRecorder()
+			registrations.UpdatePOSTRequest(emulatorCtx, emulatorClient, w, tt.documentID, tt.postResponse)
+			if w.Code != tt.expectedCode {
+				t.Errorf("Expected HTTP status code %d, but got %d", http.StatusInternalServerError, w.Code)
+			}
 		})
 	}
 }
