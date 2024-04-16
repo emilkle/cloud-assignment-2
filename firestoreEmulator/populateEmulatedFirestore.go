@@ -14,8 +14,7 @@ var ctx context.Context
 var client *firestore.Client
 var err error
 
-// PopulateFirestoreData populates an emulated Firestore to be used for testing purposes
-func PopulateFirestoreData() {
+func InitializeFirestoreEmulator() {
 	err1 := os.Setenv("FIRESTORE_EMULATOR_HOST", "127.0.0.1:8081")
 	if err1 != nil {
 		log.Printf("error setting environment variable: %v\n", err)
@@ -32,7 +31,10 @@ func PopulateFirestoreData() {
 		log.Fatalf("Failed to connect to Firestore emulator: %v", err)
 		return
 	}
+}
 
+// PopulateFirestoreData populates an emulated Firestore to be used for testing purposes
+func PopulateFirestoreData() {
 	// Define registration data to be inserted in the emulated Firestore
 	registrations := []map[string]interface{}{
 		{
