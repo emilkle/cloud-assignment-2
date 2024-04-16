@@ -58,19 +58,22 @@ func AddWebhook(webhookID string, data resources.WebhookPOST) error {
 
 // Deletes a webhook from the database
 func DeleteWebhook(ctx context.Context, client *firestore.Client, structID string) (*resources.WebhookPOSTResponse, error) {
-
+	// Reference the webhooks collection in firestore and query document with corresponding id
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 	query := ref.Where("ID", "==", structID).Limit(1)
 
+	// Get all documents matching the query
 	docs, err := query.Documents(ctx).GetAll()
 	if err != nil {
 		return nil, err
 	}
 
+	// Check if any documents were found
 	if len(docs) == 0 {
 		return nil, fmt.Errorf("document with webhook ID %s not found", structID)
 	}
 
+	// Delete the first document
 	_, err = docs[0].Ref.Delete(ctx)
 	if err != nil {
 		return nil, err
@@ -80,6 +83,7 @@ func DeleteWebhook(ctx context.Context, client *firestore.Client, structID strin
 	return &resources.WebhookPOSTResponse{ID: structID}, nil
 }
 
+// GetAllWebhooks gets all webhooks from database
 func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.WebhookGET, error) {
 	// Iterate over documents in ascending order of lastChange timestamp.
 	iter := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx)
