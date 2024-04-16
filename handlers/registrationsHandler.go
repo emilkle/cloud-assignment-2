@@ -49,6 +49,7 @@ func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
 		// Fetch all the documents in the  firestore database and handle the error that it returns.
 		registrationsResponses, err1 := registrations.GetAllRegisteredDocuments(ctx, client)
 		if err1 != nil {
+			log.Println("Could not retrieve all documents.", err1.Error())
 			http.Error(w, "Could not retrieve all documents.", http.StatusInternalServerError)
 			return
 		}
@@ -75,6 +76,8 @@ func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
 
 	// Returns an error if the notFoundIds array is longer than 0.
 	if len(notFoundIds) > 0 {
+		log.Println("Registration id(s) " + strings.Join(notFoundIds, ", ") +
+			" could not be found.")
 		http.Error(w, "Registration id(s) "+strings.Join(notFoundIds, ", ")+
 			" could not be found.", http.StatusNotFound)
 		return
@@ -104,8 +107,9 @@ func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 	err1 := json.NewDecoder(r.Body).Decode(&postRegistrationBody)
 	if err1 != nil {
 		// Respond with decoding error if unable to decode request.
+		log.Println("Unable to parse the POST request body: ", err1.Error())
 		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the POST request. Use this structure for your"+
-			" POST request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusInternalServerError)
+			" POST request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusForbidden)
 		return
 	}
 
@@ -113,12 +117,19 @@ func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 	documentID, err2 := registrations.CreatePOSTRequest(ctx, client, w, postRegistrationBody)
 	if err2 != nil {
 		// Respond with error if unable to create new document.
+		log.Println("Error when creating a new document: ", err2.Error())
 		http.Error(w, "Error when creating a new document.", http.StatusInternalServerError)
 		return
 	}
 
-	// Create response and write to the response body.
-	postResponse, _ := registrations.CreatePOSTResponse(ctx, client)
+	// Create response, write to the response body, and return an error, if any.
+	postResponse, err3 := registrations.CreatePOSTResponse(ctx, client, w)
+	if err3 != nil {
+		// Respond with error if unable to create the response.
+		log.Println("Error when creating the POST response: ", err3.Error())
+		http.Error(w, "Error when creating the POST response.", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusCreated)
 	standardResponseWriter(w, postResponse)
 
@@ -150,6 +161,7 @@ func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	err1 := json.NewDecoder(r.Body).Decode(&putRegistrationBody)
 	if err1 != nil {
 		// Respond with decoding error if unable to decode request body.
+		log.Println("Unable to parse the PUT request body: ", err1.Error())
 		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the PUT request. Use this structure for your"+
 			" PUT request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusForbidden)
 		return
@@ -159,7 +171,8 @@ func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	documentID, err2 := registrations.GetDocumentID(ctx, client, id)
 	if err2 != nil {
 		// Respond with error if unable to get document ID.
-		http.Error(w, "Error when updating the field(s) of the given document.", http.StatusInternalServerError)
+		log.Println("Unable to get the document ID of the given document.", err2.Error())
+		http.Error(w, "Unable to get the document ID of the given document.", http.StatusInternalServerError)
 		return
 	}
 
@@ -212,15 +225,17 @@ func RegistrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
 // standardResponseWriter writes the response data in JSON format to the HTTP response writer.
 func standardResponseWriter(w http.ResponseWriter, response any) {
 	// JSON encoding the given data.
-	jsonData, err2 := json.Marshal(response)
-	if err2 != nil {
+	jsonData, err1 := json.Marshal(response)
+	if err1 != nil {
+		log.Println("Unable to encode the registration data: ", err1.Error())
 		http.Error(w, resources.ENCODING_ERROR+"of the registrations data.", http.StatusInternalServerError)
 		return
 	}
 
 	// Writing the JSON encoded data to the response body.
-	_, err3 := w.Write(jsonData)
-	if err3 != nil {
+	_, err2 := w.Write(jsonData)
+	if err2 != nil {
+		log.Println("Unable to write the JSON data: ", err2.Error())
 		http.Error(w, "Error while writing response.", http.StatusInternalServerError)
 		return
 	}

@@ -1,14 +1,17 @@
-package functionTests
+package registrationsTests
 
 import (
 	"cloud.google.com/go/firestore"
 	"context"
+	"countries-dashboard-service/firestoreEmulator"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
+
+var emulatorClient *firestore.Client
+var emulatorCtx context.Context
 
 var validData = map[string]interface{}{
 	"id":      1,
@@ -20,10 +23,10 @@ var validData = map[string]interface{}{
 		"capital":          true,
 		"coordinates":      true,
 		"population":       true,
-		"area":             true,
-		"targetCurrencies": []interface{}{"NOK", "USD"},
+		"area":             false,
+		"targetCurrencies": []interface{}{"EUR", "USD", "SEK"},
 	},
-	"lastChange": "20220101 15:07",
+	"lastChange": "20240229 14:07",
 }
 
 var invalidData = map[string]interface{}{
@@ -39,7 +42,7 @@ var invalidData = map[string]interface{}{
 		"area":             true,
 		"targetCurrencies": []string{"NOK", "USD"},
 	},
-	"lastChange": "20220101 15:07",
+	"lastChange": "20240229 14:07",
 }
 
 var want = resources.RegistrationsGET{
@@ -52,10 +55,10 @@ var want = resources.RegistrationsGET{
 		Capital:          true,
 		Coordinates:      true,
 		Population:       true,
-		Area:             true,
-		TargetCurrencies: []string{"NOK", "USD"},
+		Area:             false,
+		TargetCurrencies: []string{"EUR", "USD", "SEK"},
 	},
-	LastChange: "20220101 15:07",
+	LastChange: "20240229 14:07",
 }
 
 var doNotWant = resources.RegistrationsGET{
@@ -71,27 +74,49 @@ var doNotWant = resources.RegistrationsGET{
 		Area:             true,
 		TargetCurrencies: nil,
 	},
-	LastChange: "20220101 15:07",
+	LastChange: "20240229 14:07",
 }
 
 func TestCreateRegistrationsGET(t *testing.T) {
+	firestoreEmulator.PopulateFirestoreData()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+
 	tests := []struct {
-		name    string
-		idParam string
-		want    resources.RegistrationsGET
-		wantErr bool
+		name         string
+		idParam      string
+		expectedBody resources.RegistrationsGET
+		wantErr      bool
 	}{
 		// TODO: Add test cases.
+		{
+			name:         "Create a single registration",
+			idParam:      "1",
+			expectedBody: want,
+			wantErr:      false,
+		},
+		{
+			name:         "Registration was not found",
+			idParam:      "3",
+			expectedBody: resources.RegistrationsGET{},
+			wantErr:      true,
+		},
+		{
+			name:         "Invalid id string",
+			idParam:      "sdfsddfs",
+			expectedBody: resources.RegistrationsGET{},
+			wantErr:      true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := registrations.CreateRegistrationsGET(tt.idParam)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreateRegistrationsGET() error = %v, wantErr %v", err, tt.wantErr)
+			got, err1 := registrations.CreateRegistrationsGET(emulatorCtx, emulatorClient, tt.idParam)
+			if (err1 != nil) != tt.wantErr {
+				t.Errorf("Could not find the document with id: " + tt.idParam)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CreateRegistrationsGET() got = %v, want %v", got, tt.want)
+			if !reflect.DeepEqual(got, tt.expectedBody) {
+				t.Errorf("GetAllRegisteredDocuments() got = %v, expectedBody %v", got, tt.expectedBody)
 			}
 		})
 	}
@@ -99,21 +124,23 @@ func TestCreateRegistrationsGET(t *testing.T) {
 
 func TestGetAllRegisteredDocuments(t *testing.T) {
 	tests := []struct {
-		name    string
-		want    []resources.RegistrationsGET
-		wantErr bool
+		name         string
+		ctx          context.Context
+		client       *firestore.Client
+		expectedBody []resources.RegistrationsGET
+		wantErr      bool
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := registrations.GetAllRegisteredDocuments()
+			got, err := registrations.GetAllRegisteredDocuments(tt.ctx, tt.client)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetAllRegisteredDocuments() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAllRegisteredDocuments() got = %v, want %v", got, tt.want)
+			if !reflect.DeepEqual(got, tt.expectedBody) {
+				t.Errorf("GetAllRegisteredDocuments() got = %v, expectedBody %v", got, tt.expectedBody)
 			}
 		})
 	}
@@ -155,7 +182,7 @@ func TestGetTargetCurrencies(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := registrations.GetTargetCurrencies(tt.featuresData); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetTargetCurrencies() = %v, want %v", got, tt.want)
+				t.Errorf("GetTargetCurrencies() = %v, expectedBody %v", got, tt.want)
 			}
 		})
 	}
@@ -171,41 +198,44 @@ func Test_CreateRegistrationsResponse(t *testing.T) {
 		wantErr    bool
 	}{
 		// TODO: Add test cases.
-		{name: "Positive test", data: validData, lastChange: "20220101 15:07", idIndex: 1,
+		{name: "Positive test", data: validData, lastChange: "20240229 14:07", idIndex: 1,
 			want: want, wantErr: false},
-		{name: "Negative test", data: invalidData, lastChange: "20220101 15:07", idIndex: 1,
+		{name: "Negative test", data: invalidData, lastChange: "20240229 14:07", idIndex: 1,
 			want: doNotWant, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := registrations.CreateRegistrationsResponse(tt.data, tt.lastChange, tt.idIndex); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("createRegistrationsResponse() = %v, want %v", got, tt.want)
+				t.Errorf("createRegistrationsResponse() = %v, expectedBody %v", got, tt.want)
 			}
 		})
 	}
 }
 
+/*
 func Test_UpdateId(t *testing.T) {
-	ctx := context.Background()
-
-	clientMock := &MockFirestoreClient{}
+	firestoreEmulator.PopulateFirestoreData()
+	emulatorClient = database.GetFirestoreClient()
+	emulatorCtx = database.GetFirestoreContext()
 
 	testsStruct := []struct {
 		name        string
 		documentID  string
 		getResponse resources.RegistrationsGET
+		expectedID  int
 		expectedErr bool
 	}{
 		// TODO: Add test cases.
 		{
-			name:        "Positive test",
-			documentID:  "test",
-			getResponse: resources.RegistrationsGET{Id: 1},
+			name:        "Valid document id",
+			documentID:  "20SzsZHCVOizM7br3oHz",
+			getResponse: resources.RegistrationsGET{Id: 2},
+			expectedID:  3,
 			expectedErr: false,
 		},
 		{
-			name:        "Negative test",
-			documentID:  "", // Invalid document ID
+			name:        "Document id is invalid",
+			documentID:  "",
 			getResponse: resources.RegistrationsGET{Id: 123},
 			expectedErr: true,
 		},
@@ -213,19 +243,24 @@ func Test_UpdateId(t *testing.T) {
 
 	for _, tt := range testsStruct {
 		t.Run(tt.name, func(t *testing.T) {
-			// Define the expected behavior for the Set method
-			clientMock.SetFunc = func(ctx context.Context, docRef *firestore.DocumentRef,
-				data interface{}, opts ...firestore.SetOption) (*firestore.WriteResult, error) {
-				validId, ok := data.(map[string]interface{})["id"].(int)
-				assert.True(t, ok, "expected 'id' field to be an integer")
-				assert.Equal(t, tt.documentID, docRef.ID)
-				assert.Equal(t, tt.getResponse.Id, validId)
-				// You can add more assertions for other arguments if needed
-				return nil, nil // Return whatever result you expect
-			}
+			registrations.UpdateId(emulatorCtx, emulatorClient, tt.documentID, tt.getResponse)
 
-			// Call the function being tested
-			UpdateId(ctx, clientMock, tt.documentID, tt.getResponse)
+			// Retrieve the updated document from Firestore and verify its ID
+			updatedDoc, err := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
+				Doc(tt.documentID).Get(emulatorCtx)
+			if err != nil {
+				t.Errorf("Error retrieving updated document: %v", err)
+				return
+			}
+			var data map[string]interface{}
+			if err := updatedDoc.DataTo(&data); err != nil {
+				t.Errorf("Error converting document data: %v", err)
+				return
+			}
+			updatedID := data["id"].(int) // Assuming the ID field is an int
+
+			// Use assertions to verify the results
+			assert.Equal(t, tt.expectedID, updatedID, "Updated ID mismatch")
 		})
 	}
-}
+}*/

@@ -111,6 +111,11 @@ type TargetCurrencyValues struct {
 
 // Notification endpoint structs
 
+// WebhookPOSTRequest struct for POST request
+type WebhookPOSTRequest struct {
+	URL string `json:"url"`
+}
+
 // WebhookPOST struct for POST request
 type WebhookPOST struct {
 	URL     string `json:"url"`

@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Initialize signature (via init())
@@ -23,7 +24,7 @@ var SignatureKey = "X-SIGNATURE"
 // var Mac hash.Hash
 var Secret []byte
 
-// Handles webhook registration (POST), lookup (GET) requests and deletion (DELETE) requests.
+// WebhookHandler handles webhook registration (POST), lookup (GET) requests and deletion (DELETE) requests.
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -147,36 +148,90 @@ func webhookRequestDELETE(w http.ResponseWriter, r *http.Request) {
 Invokes the web service to trigger event. Currently only responds to POST requests.
 */
 func ServiceHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := database.GetFirestoreContext()
-	client := database.GetFirestoreClient()
-	str, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal("Error during decoding message content. Error: " + string(str))
-	}
+	log.Println("Servicehandler invoked")
+
 	switch r.Method {
 	case http.MethodPost:
-		// Plasser andre metoder her
-		log.Println("Received POST request...")
-		// Iterate through registered webhooks and invoke based on registered URL, method, and with received content
-		var webhooks, _ = functions.GetAllWebhooks(ctx, client)
-		if err != nil {
-			log.Println("Handle this error later", err)
+		ctx := database.GetFirestoreContext()
+		client := database.GetFirestoreClient()
+
+		webhookRequest := resources.WebhookPOSTRequest{}
+		/*
+			str, err := io.ReadAll(r.Body)
+			log.Println(r.Body)
+			if err != nil {
+				log.Fatal("Error during decoding message content. Error: " + string(str))
+			}
+
+		*/
+		log.Println("so far so good")
+		//var data map[string]interface{}
+		err3 := json.NewDecoder(r.Body).Decode(&webhookRequest)
+		log.Println(r.Body)
+		log.Println(webhookRequest)
+		if err3 != nil {
+			log.Fatal("Error decoding request body: ", err3)
 		}
+
+		urlFromRequest := webhookRequest.URL
+		/*
+			, ok := data["URL"].(string)
+
+			if !ok {
+				log.Fatal("Missing 'url' field in request body")
+			}
+
+		*/
+
+		var webhooks, err2 = functions.GetAllWebhooks(ctx, client)
+		if err2 != nil {
+			log.Println("Error fetching all webhooks: ", err2)
+			http.Error(w, "Error fetching webhooks", http.StatusInternalServerError)
+			return
+		}
+
+		var matchingWebhooks []*resources.WebhookGET
 		for _, v := range webhooks {
-			log.Println("Trigger event: Call to service endpoint with method " + v.Event +
-				" and content '" + string(str) + "'.")
-			go CallUrl(v.URL, v.Event, string(str))
+			if v.URL == urlFromRequest {
+				matchingWebhooks = append(matchingWebhooks, &v)
+				break
+			}
 		}
+
+		if matchingWebhooks == nil {
+			log.Println("No matching webhook found for URL: ", urlFromRequest)
+			http.Error(w, "No matching webhook found", http.StatusNotFound)
+			return
+		}
+		for _, webhook := range matchingWebhooks {
+			go CallUrl(webhook.URL, webhook.Event, urlFromRequest, webhook, w)
+			log.Println("Calling CallUrl")
+		}
+
+		/*
+			log.Println("Received POST request...")
+			// Iterate through registered webhooks and invoke based on registered URL, method, and with received content
+			var webhooks, _ = functions.GetAllWebhooks(ctx, client)
+			if err != nil {
+				log.Println("TODO Handle this error later", err)
+			}
+			for _, v := range webhooks {
+				log.Println("Trigger event: Call to service endpoint with method " + v.Event +
+					" and content '" + string(str) + "'.")
+
+			}
+
+		*/
 	default:
 		// Edit in the correct constant when done implementing webhooks
-		http.Error(w, "Method "+r.Method+" not supported for "+resources.TEMP_WEBHOOK_INV, http.StatusMethodNotAllowed)
+		http.Error(w, "Method "+r.Method+" not supported for "+resources.WebhookInv, http.StatusMethodNotAllowed)
 	}
 }
 
 /*
 Calls given URL with given content and awaits response (status and body).
 */
-func CallUrl(url string, method string, content string) {
+func CallUrl(url string, method string, content string, webhook *resources.WebhookGET, w io.Writer) {
 	log.Println("Attempting invocation of url " + url + " with content '" + content + "'.")
 	//res, err := http.Post(url, "text/plain", bytes.NewReader([]byte(content)))
 	req, err := http.NewRequest(method, url, bytes.NewReader([]byte(content)))
@@ -207,6 +262,27 @@ func CallUrl(url string, method string, content string) {
 		return
 	}
 
+	if res.StatusCode == http.StatusOK {
+		country := webhook.Country
+		id := webhook.ID
+
+		response := resources.WebhookInvocation{
+			ID:      id,
+			Country: country,
+			Event:   webhook.Event,
+			Time:    time.Now().Format("20060102 04:05"),
+		}
+
+		err3 := json.NewEncoder(w).Encode(response)
+		if err3 != nil {
+			log.Println("Error encoding response: ", err3)
+		}
+	} else {
+		// Handle unsuccessful response (e.g., log error, return a different response object)
+		log.Println("Webhook invocation unsuccessful. Received status code:", res.StatusCode)
+
+	}
+
 	// Read the response
 	response, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -228,7 +304,7 @@ func DefaultServerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Prepare output returned to client
 	output := "This service offers the following endpoints: <br>The " + resources.NOTIFICATIONS_PATH + " endpoint provides the registration functionality for webhooks (" + http.MethodPost + " and " + http.MethodGet + "), <br>The " +
-		resources.TEMP_WEBHOOK_INV + " endpoint triggers the invocation of registered webhooks when called (with arbitrary payload)." +
+		resources.WebhookInv + " endpoint triggers the invocation of registered webhooks when called (with arbitrary payload)." +
 		"<br>The payload structure for the webhook registration via " +
 		http.MethodPost + " is the following JSON structure: {\"url\": \"http://targetHost:targetPort/pathTobeInvoked\", \"event\": \"POST\"}<br>" +
 		"Please see the associated Readme for more information."

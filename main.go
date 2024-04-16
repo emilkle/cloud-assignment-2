@@ -28,7 +28,8 @@ func main() {
 	http.HandleFunc(resources.REGISTRATIONS_PATH, handlers.RegistrationsHandler)
 	http.HandleFunc(resources.DASHBOARDS_PATH, handlers.DashboardsHandler)
 	http.HandleFunc(resources.NOTIFICATIONS_PATH, handlers.WebhookHandler)
-	http.HandleFunc(resources.TEMP_WEBHOOK_INV, handlers.ServiceHandler)
+	http.HandleFunc(resources.WebhookInv, handlers.ServiceHandler)
+	//http.HandleFunc(resources.WebhookInv, handlers.DefaultServerHandler)
 	http.HandleFunc(resources.STATUS_PATH, handlers.StatusHandler)
 
 	log.Println("Service is listening on port " + port)
