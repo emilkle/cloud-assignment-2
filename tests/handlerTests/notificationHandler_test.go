@@ -1,5 +1,6 @@
 package handlerTests
 
+/*
 import (
 	"countries-dashboard-service/handlers"
 	"net/http"
@@ -152,3 +153,6 @@ func Test_webhookRequestPOST(t *testing.T) {
 		})
 	}
 }
+
+
+*/

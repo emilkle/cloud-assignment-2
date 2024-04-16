@@ -2,7 +2,7 @@ package dashboards
 
 import (
 	"cloud.google.com/go/firestore"
-	"countries-dashboard-service/database"
+	"context"
 	"countries-dashboard-service/resources"
 	"fmt"
 	"log"
@@ -12,9 +12,9 @@ import (
 )
 
 // RetrieveDashboardData fetches the dashboard data from Firestore DB
-func RetrieveDashboardData(dashboardId string) ([]*firestore.DocumentSnapshot, int, error) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+func RetrieveDashboardData(client *firestore.Client, ctx context.Context, dashboardId string) ([]*firestore.DocumentSnapshot, int, error) {
+	//client := database.GetFirestoreClient()
+	//ctx := database.GetFirestoreContext()
 
 	idNumber, err := strconv.Atoi(dashboardId)
 	if err != nil {
@@ -23,6 +23,8 @@ func RetrieveDashboardData(dashboardId string) ([]*firestore.DocumentSnapshot, i
 	}
 	query := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==", idNumber).Limit(1)
 	documents, err := query.Documents(ctx).GetAll()
+	data := documents[0].Data()
+	log.Printf("documents snapshot: %+v", data)
 	if err != nil {
 		log.Printf("Failed to fetch documents. Error: %s", err)
 		return nil, 0, err
@@ -31,8 +33,8 @@ func RetrieveDashboardData(dashboardId string) ([]*firestore.DocumentSnapshot, i
 }
 
 // RetrieveDashboardGet returns a single/specific dashboard based on the dashboard ID.
-func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
-	documents, idNumber, err := RetrieveDashboardData(dashboardId)
+func RetrieveDashboardGet(client *firestore.Client, ctx context.Context, dashboardId string, runTest bool) (resources.DashboardsGet, error) {
+	documents, idNumber, err := RetrieveDashboardData(client, ctx, dashboardId)
 	if err != nil {
 		return resources.DashboardsGet{}, err
 	}
@@ -67,7 +69,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 	var latitude float64
 	var longitude float64
 	var coordinateData resources.CoordinatesValues
-	coordinateData, err = RetrieveCoordinates(data["country"].(string), idNumber, false)
+	coordinateData, err = RetrieveCoordinates(data["country"].(string), idNumber, runTest)
 	// Lat and Long used in the RetrieveTempAndPrecipitation function.
 	// Because a dashboard configuration might not have the coordinates set to true
 	latitude = coordinateData.Latitude
@@ -81,7 +83,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 
 	// Retrieve capital, population and area
 	if featuresData["capital"].(bool) || featuresData["population"].(bool) || featuresData["area"].(bool) {
-		capitalPopArea, err = RetrieveCapitalPopulationAndArea(data["isoCode"].(string), idNumber, false)
+		capitalPopArea, err = RetrieveCapitalPopulationAndArea(data["isoCode"].(string), idNumber, runTest)
 
 		// Check if dashboard configuration supports capital, population or area
 		if featuresData["capital"].(bool) {
@@ -97,7 +99,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 
 	// Retrieve temperature and precipitation data
 	if featuresData["temperature"].(bool) || featuresData["precipitation"].(bool) {
-		tempAndPrecip, err = RetrieveTempAndPrecipitation(latitude, longitude, idNumber, false)
+		tempAndPrecip, err = RetrieveTempAndPrecipitation(latitude, longitude, idNumber, runTest)
 		temperature, precipitation := CalculateMeanTemperatureAndPrecipitation(tempAndPrecip)
 
 		//Check if dashboard configuration support temperature and precipitation
@@ -109,8 +111,9 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 		}
 	}
 
+	log.Printf("DEBUGGING features data: %+v", featuresData)
 	//Exchange rates are always shown in a dashboard
-	selectedExchangeRates, err = RetrieveTargetCurrenciesAndExchangeRates(featuresData, idNumber)
+	selectedExchangeRates, err = RetrieveTargetCurrenciesAndExchangeRates(featuresData, idNumber, runTest)
 	if err != nil {
 		return resources.DashboardsGet{}, err
 	}
@@ -165,9 +168,9 @@ func CalculateMeanTemperatureAndPrecipitation(tempAndPrecip resources.HourlyData
 }
 
 // RetrieveTargetCurrenciesAndExchangeRates retrieves the currency exchange rates displayed in a dashboard configuration
-func RetrieveTargetCurrenciesAndExchangeRates(featuresData map[string]interface{}, id int) (resources.TargetCurrencyValues, error) {
+func RetrieveTargetCurrenciesAndExchangeRates(featuresData map[string]interface{}, id int, runTest bool) (resources.TargetCurrencyValues, error) {
 	// Retrieve exchange rates
-	exchangeRates, err := RetrieveCurrencyExchangeRates(id, false)
+	exchangeRates, err := RetrieveCurrencyExchangeRates(id, runTest)
 	if err != nil {
 		return resources.TargetCurrencyValues{}, err
 	}
