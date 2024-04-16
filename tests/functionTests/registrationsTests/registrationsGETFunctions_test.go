@@ -2,8 +2,6 @@ package registrationsTests
 
 import (
 	"cloud.google.com/go/firestore"
-	"context"
-	"countries-dashboard-service/firestoreEmulator"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
 	"fmt"
@@ -11,9 +9,6 @@ import (
 	"reflect"
 	"testing"
 )
-
-var emulatorClient *firestore.Client
-var emulatorCtx context.Context
 
 var validData = map[string]interface{}{
 	"id":      1,
@@ -129,9 +124,7 @@ var invalidDocument3 = map[string]interface{}{
 }
 
 func TestCreateRegistrationsGET(t *testing.T) {
-	firestoreEmulator.PopulateFirestoreData()
-	emulatorClient = firestoreEmulator.GetEmulatorClient()
-	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+	SetupFirestoreDatabase()
 
 	tests := []struct {
 		name         string
@@ -174,9 +167,7 @@ func TestCreateRegistrationsGET(t *testing.T) {
 }
 
 func TestGetAllRegisteredDocuments(t *testing.T) {
-	firestoreEmulator.PopulateFirestoreData()
-	emulatorClient = firestoreEmulator.GetEmulatorClient()
-	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+	SetupFirestoreDatabase()
 
 	tests := []struct {
 		name         string
@@ -311,10 +302,7 @@ func Test_CreateRegistrationsResponse(t *testing.T) {
 }
 
 func Test_UpdateId(t *testing.T) {
-	firestoreEmulator.PopulateFirestoreData()
-	emulatorClient = firestoreEmulator.GetEmulatorClient()
-	emulatorCtx = firestoreEmulator.GetEmulatorContext()
-
+	SetupFirestoreDatabase()
 	firstDocumentID := ""
 	docRef := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Limit(1)
 	docs, err := docRef.Documents(emulatorCtx).GetAll()
