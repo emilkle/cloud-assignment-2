@@ -79,6 +79,55 @@ var doNotWant = resources.RegistrationsGET{
 	LastChange: "20240229 14:07",
 }
 
+var allDocuments = []resources.RegistrationsGET{
+	{
+		Id:      1,
+		Country: "Norway",
+		IsoCode: "NO",
+		Features: resources.Features{
+			Temperature:      true,
+			Precipitation:    true,
+			Capital:          true,
+			Coordinates:      true,
+			Population:       true,
+			Area:             false,
+			TargetCurrencies: []string{"EUR", "USD", "SEK"},
+		},
+		LastChange: "20240229 14:07",
+	},
+	{
+		Id:      2,
+		Country: "Sweden",
+		IsoCode: "SE",
+		Features: resources.Features{
+			Temperature:      true,
+			Precipitation:    false,
+			Capital:          true,
+			Coordinates:      true,
+			Population:       true,
+			Area:             true,
+			TargetCurrencies: []string{"EUR", "SEK"},
+		},
+		LastChange: "20240301 15:10",
+	},
+}
+
+var invalidDocument3 = map[string]interface{}{
+	"id":      3,
+	"country": "Denmark",
+	"isoCode": "DK",
+	"features": map[string]interface{}{
+		"temperature":      true,
+		"precipitation":    true,
+		"capital":          true,
+		"coordinates":      true,
+		"population":       true,
+		"area":             true,
+		"targetCurrencies": []string{"NOK", "USD"},
+	},
+	"lastChange": 1,
+}
+
 func TestCreateRegistrationsGET(t *testing.T) {
 	firestoreEmulator.PopulateFirestoreData()
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
@@ -125,18 +174,55 @@ func TestCreateRegistrationsGET(t *testing.T) {
 }
 
 func TestGetAllRegisteredDocuments(t *testing.T) {
+	firestoreEmulator.PopulateFirestoreData()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+
 	tests := []struct {
 		name         string
-		ctx          context.Context
-		client       *firestore.Client
 		expectedBody []resources.RegistrationsGET
 		wantErr      bool
+		invalidTest  bool
 	}{
 		// TODO: Add test cases.
+		{
+			name:         "Get all documents",
+			expectedBody: allDocuments,
+			wantErr:      false,
+			invalidTest:  false,
+		},
+		{
+			name:         "Invalid last change field",
+			expectedBody: nil,
+			wantErr:      true,
+			invalidTest:  true,
+		},
 	}
 	for _, tt := range tests {
+		var newDocumentRef *firestore.DocumentRef
+		var _ *firestore.WriteResult
+		var err1 error
+		if tt.invalidTest {
+			docs, err2 := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Documents(emulatorCtx).GetAll()
+			if err2 != nil {
+				log.Println("Failed to retrieve documents: ", err2.Error())
+				return
+			}
+
+			if len(docs) < 3 {
+				newDocumentRef, _, err1 = emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
+					Add(emulatorCtx, invalidDocument3)
+				if err1 != nil {
+					log.Printf("An error occurred when creating a new document: %v", err1.Error())
+				} else {
+					log.Printf("Document added to the registrations collection. Identifier of the added document: %v",
+						newDocumentRef.ID)
+				}
+			}
+		}
+
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := registrations.GetAllRegisteredDocuments(tt.ctx, tt.client)
+			got, err := registrations.GetAllRegisteredDocuments(emulatorCtx, emulatorClient)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetAllRegisteredDocuments() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -145,6 +231,16 @@ func TestGetAllRegisteredDocuments(t *testing.T) {
 				t.Errorf("GetAllRegisteredDocuments() got = %v, expectedBody %v", got, tt.expectedBody)
 			}
 		})
+
+		if tt.invalidTest {
+			_, err := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
+				Doc(newDocumentRef.ID).Delete(emulatorCtx)
+			if err != nil {
+				log.Printf("Failed to delete the document: %v", err.Error())
+			} else {
+				log.Printf("Document %v deleted successfully", newDocumentRef.ID)
+			}
+		}
 	}
 }
 
@@ -239,7 +335,6 @@ func Test_UpdateId(t *testing.T) {
 		documentID  string
 		getResponse resources.RegistrationsGET
 		expectedId  int
-		expectedErr bool
 	}{
 		// TODO: Add test cases.
 		{
@@ -247,13 +342,11 @@ func Test_UpdateId(t *testing.T) {
 			documentID:  firstDocumentID,
 			getResponse: want,
 			expectedId:  1,
-			expectedErr: false,
 		},
 		{
 			name:        "Document id is invalid",
 			documentID:  "",
 			getResponse: resources.RegistrationsGET{},
-			expectedErr: true,
 		},
 	}
 
