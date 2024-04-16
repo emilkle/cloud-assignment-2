@@ -13,6 +13,19 @@ const CURRENCY_PATH = "http://129.241.150.113:9090/currency/"
 const GEOCODING_METEO = "https://geocoding-api.open-meteo.com/v1"
 const METEO_TEMP_PERCIP = "https://api.open-meteo.com/v1"
 
+// Webhook event constants
+const (
+	POSTTitle   = "New country data is registered to dashboard"
+	PUTTitle    = "New updates in dashboard"
+	GETTitle    = "Invoked country data from dashboard"
+	DELETETitle = "Deleted country data from dashboard"
+
+	EventRegister = "REGISTER"
+	EventChange   = "CHANGE"
+	EventDelete   = "DELETE"
+	EventInvoke   = "INVOKE"
+)
+
 // Webhook invocation during development
 const WebhookInv = "/invocation/"
 
