@@ -80,7 +80,7 @@ func RetrieveDashboardGet(dashboardId string) (resources.DashboardsGet, error) {
 	}
 
 	// Retrieve capital, population and area
-	if featuresData["capital"].(bool) || featuresData["copulation"].(bool) || featuresData["area"].(bool) {
+	if featuresData["capital"].(bool) || featuresData["population"].(bool) || featuresData["area"].(bool) {
 		capitalPopArea, err = RetrieveCapitalPopulationAndArea(data["isoCode"].(string), idNumber, false)
 
 		// Check if dashboard configuration supports capital, population or area
