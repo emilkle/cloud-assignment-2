@@ -4,7 +4,6 @@ import (
 	"cloud.google.com/go/firestore"
 	"context"
 	"countries-dashboard-service/resources"
-	"fmt"
 	"google.golang.org/api/option"
 	"log"
 	"net/http"
@@ -69,22 +68,24 @@ func PopulateFirestoreData() {
 		// more registrations can be added if needed
 	}
 
-	// Iterate over registrations and add them to Firestore
-	for _, reg := range registrations {
-		documentSnapshot, err2 := client.
-			Collection(resources.REGISTRATIONS_COLLECTION).Doc(fmt.Sprintf("%d", reg["id"])).Get(ctx)
-		if documentSnapshot.Exists() || err2 != nil {
-			// Document with the same ID already exists
-			log.Printf("Document with ID %d already exists, skipping.", reg["id"])
-			continue
-		}
+	docs, err2 := client.Collection(resources.REGISTRATIONS_COLLECTION).Documents(ctx).GetAll()
+	if err2 != nil {
+		log.Println("Failed to retrieve documents: ", err2.Error())
+		return
+	}
 
-		_, _, err3 := client.Collection(resources.REGISTRATIONS_COLLECTION).Add(ctx, reg)
-		if err3 != nil {
-			log.Printf("Failed to add registration: %v", err3)
-		} else {
-			log.Println("Registration added to the Firestore collection.")
+	// Iterate over registrations and add them to Firestore
+	if len(docs) < 2 {
+		for _, reg := range registrations {
+			_, _, err3 := client.Collection(resources.REGISTRATIONS_COLLECTION).Add(ctx, reg)
+			if err3 != nil {
+				log.Printf("Failed to add registration: %v", err3)
+			} else {
+				log.Println("Registration added to the Firestore collection.")
+			}
 		}
+	} else {
+		log.Println("There are already 2 documents in the collection. Skipping document addition.")
 	}
 }
 

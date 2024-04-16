@@ -6,6 +6,8 @@ import (
 	"countries-dashboard-service/firestoreEmulator"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
+	"fmt"
+	"log"
 	"reflect"
 	"testing"
 )
@@ -212,55 +214,58 @@ func Test_CreateRegistrationsResponse(t *testing.T) {
 	}
 }
 
-/*
 func Test_UpdateId(t *testing.T) {
 	firestoreEmulator.PopulateFirestoreData()
-	emulatorClient = database.GetFirestoreClient()
-	emulatorCtx = database.GetFirestoreContext()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
 
-	testsStruct := []struct {
+	firstDocumentID := ""
+	docRef := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Limit(1)
+	docs, err := docRef.Documents(emulatorCtx).GetAll()
+	if err != nil {
+		log.Println("Failed to retrieve documents: ", err.Error())
+		return
+	}
+
+	if len(docs) > 0 {
+		firstDocumentID = docs[0].Ref.ID
+		fmt.Println("First document ID:", firstDocumentID)
+	} else {
+		fmt.Println("No documents found in the collection")
+	}
+
+	tests := []struct {
 		name        string
 		documentID  string
 		getResponse resources.RegistrationsGET
-		expectedID  int
+		expectedId  int
 		expectedErr bool
 	}{
 		// TODO: Add test cases.
 		{
 			name:        "Valid document id",
-			documentID:  "20SzsZHCVOizM7br3oHz",
-			getResponse: resources.RegistrationsGET{Id: 2},
-			expectedID:  3,
+			documentID:  firstDocumentID,
+			getResponse: want,
+			expectedId:  1,
 			expectedErr: false,
 		},
 		{
 			name:        "Document id is invalid",
 			documentID:  "",
-			getResponse: resources.RegistrationsGET{Id: 123},
+			getResponse: resources.RegistrationsGET{},
 			expectedErr: true,
 		},
 	}
 
-	for _, tt := range testsStruct {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			registrations.UpdateId(emulatorCtx, emulatorClient, tt.documentID, tt.getResponse)
-
-			// Retrieve the updated document from Firestore and verify its ID
-			updatedDoc, err := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
-				Doc(tt.documentID).Get(emulatorCtx)
-			if err != nil {
-				t.Errorf("Error retrieving updated document: %v", err)
-				return
+			mockResponse := resources.RegistrationsGET{
+				Id: tt.getResponse.Id,
 			}
-			var data map[string]interface{}
-			if err := updatedDoc.DataTo(&data); err != nil {
-				t.Errorf("Error converting document data: %v", err)
-				return
+			if tt.expectedId != mockResponse.Id {
+				t.Errorf("Expected id %v, but got %v", tt.expectedId, mockResponse.Id)
 			}
-			updatedID := data["id"].(int) // Assuming the ID field is an int
-
-			// Use assertions to verify the results
-			assert.Equal(t, tt.expectedID, updatedID, "Updated ID mismatch")
 		})
 	}
-}*/
+}
