@@ -6,6 +6,7 @@ import (
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -77,29 +78,93 @@ var allRegistrations = []resources.RegistrationsGET{
 }
 
 func TestCreatePOSTRequest(t *testing.T) {
-	type args struct {
-		ctx    context.Context
-		client *firestore.Client
-		w      http.ResponseWriter
-		data   resources.RegistrationsPOSTandPUT
+	SetupFirestoreDatabase()
+
+	testRegistration := resources.RegistrationsPOSTandPUT{
+		Country: "Spain",
+		IsoCode: "ES",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    true,
+			Capital:          false,
+			Coordinates:      true,
+			Population:       false,
+			Area:             true,
+			TargetCurrencies: []string{"EUR", "NOK"},
+		},
 	}
+
+	invalidRegistrationStructCountry := resources.RegistrationsPOSTandPUT{
+		Country: "",
+		IsoCode: "",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: nil,
+		},
+	}
+
+	invalidRegistrationStructCurrencies := resources.RegistrationsPOSTandPUT{
+		Country: "Norway",
+		IsoCode: "NO",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: []string{"", ""},
+		},
+	}
+
+	invalidErrorCountry := errors.New("'country' field is not a string")
+
+	invalidErrorCurrencies := errors.New("element:of 'targetCurrencies' field is not a string")
+
 	tests := []struct {
 		name    string
-		args    args
+		data    resources.RegistrationsPOSTandPUT
 		want    string
-		wantErr bool
+		wantErr error
 	}{
 		// TODO: Add test cases.
+		{
+			name: "The POST request is valid and the length of the document id is correct," +
+				" and thus the document is added",
+			data:    testRegistration,
+			want:    "1234567890polikjas23",
+			wantErr: nil,
+		},
+		{
+			name:    "The POST request body has an invalid country field format",
+			data:    invalidRegistrationStructCountry,
+			want:    "",
+			wantErr: invalidErrorCountry,
+		},
+		{
+			name:    "The POST request body has an invalid targetCurrency field format",
+			data:    invalidRegistrationStructCurrencies,
+			want:    "",
+			wantErr: invalidErrorCurrencies,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := registrations.CreatePOSTRequest(tt.args.ctx, tt.args.client, tt.args.w, tt.args.data)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreatePOSTRequest() error = %v, wantErr %v", err, tt.wantErr)
+			w := httptest.NewRecorder()
+
+			got, err := registrations.CreatePOSTRequest(emulatorCtx, emulatorClient, w, tt.data)
+			if err != nil && err.Error() != tt.wantErr.Error() {
+				t.Errorf("CreatePOSTRequest() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("CreatePOSTRequest() got = %v, expectedBody %v", got, tt.want)
+			if len(got) != len(tt.want) {
+				t.Errorf("CreatePOSTRequest() got document ID with length = %v, "+
+					"expected document ID with length  %v", len(got), len(tt.want))
 			}
 		})
 	}
@@ -123,8 +188,8 @@ func TestCreatePOSTResponse(t *testing.T) {
 			LastChange: "20240229 14:07",
 		}
 
-		jsonResponse, err := json.Marshal(postResponse)
-		if err != nil {
+		jsonResponse, err1 := json.Marshal(postResponse)
+		if err1 != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
