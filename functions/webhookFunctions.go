@@ -3,7 +3,6 @@ package functions
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	"countries-dashboard-service/database"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"fmt"
@@ -12,7 +11,7 @@ import (
 	"log"
 )
 
-// Generates a unique ID using google uuid library
+// GenerateID Generates a unique ID using google uuid library and returns it
 func GenerateID() string {
 	uuid, err := uuid2.NewRandom()
 	if err != nil {
@@ -22,11 +21,10 @@ func GenerateID() string {
 	return uuid.String()
 }
 
-// Adds a webhook to the firestore database
-func AddWebhook(webhookID string, data resources.WebhookPOST) error {
-	ctx := database.GetFirestoreContext()
-	client := database.GetFirestoreClient()
-
+// AddWebhook adds a webhook to the firestore database
+// It takes a context, Firestore client, the ID of the webhook to add and a struct of type WebhookPOST.
+// It returns a log of successful addition of webhook and an error.
+func AddWebhook(ctx context.Context, client *firestore.Client, webhookID string, data resources.WebhookPOST) error {
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 
 	// Encode data struct as JSON byte slice
@@ -35,6 +33,7 @@ func AddWebhook(webhookID string, data resources.WebhookPOST) error {
 		return fmt.Errorf("error marshalling webhook data: %v", err1)
 	}
 
+	// Unmarshal the webhook variable
 	var webhook resources.WebhookGET
 	err2 := json.Unmarshal(jsonData, &webhook)
 	if err2 != nil {
@@ -56,7 +55,9 @@ func AddWebhook(webhookID string, data resources.WebhookPOST) error {
 	return nil
 }
 
-// Deletes a webhook from the database
+// DeleteWebhook removes a webhook from the database
+// It takes a context, Firestore client, and the ID of the webhook to delete.
+// It returns a log of successful deletion of webhook or an error.
 func DeleteWebhook(ctx context.Context, client *firestore.Client, structID string) (*resources.WebhookPOSTResponse, error) {
 	// Reference the webhooks collection in firestore and query document with corresponding id
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
@@ -83,7 +84,9 @@ func DeleteWebhook(ctx context.Context, client *firestore.Client, structID strin
 	return &resources.WebhookPOSTResponse{ID: structID}, nil
 }
 
-// GetAllWebhooks gets all webhooks from database
+// GetAllWebhooks retrieves all webhooks from database
+// It takes a context and a Firestore client.
+// It returns an array of webhooks, or an error if not found or any other error occurs.
 func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.WebhookGET, error) {
 	// Iterate over documents in ascending order of lastChange timestamp.
 	iter := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx)
@@ -116,16 +119,21 @@ func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.
 	return webhookResponses, nil
 }
 
-// Fetches a single webhook from the database
+// GetWebhook retrieves a webhook document from Firestore based on its ID.
+// It takes a context, Firestore client, and the ID of the webhook to retrieve.
+// It returns the webhook data if found, or an error if not found or any other error occurs.
 func GetWebhook(ctx context.Context, client *firestore.Client, webhookID string) (*resources.WebhookGET, error) {
+	// Make reference to webhook collection in firestore database and query doc with specified id
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 	query := ref.Where("ID", "==", webhookID).Limit(1)
 
+	// Retrieve documents matching query
 	docs, err1 := query.Documents(ctx).GetAll()
 	if err1 != nil {
 		return nil, err1
 	}
 
+	// If not found return an error
 	if len(docs) == 0 {
 		return nil, fmt.Errorf("document with webhook ID %s not found", webhookID)
 	}
@@ -136,7 +144,7 @@ func GetWebhook(ctx context.Context, client *firestore.Client, webhookID string)
 		if err2 := doc.DataTo(&webhookData); err2 != nil {
 			return nil, err2
 		}
-		// Since you're using Limit(1), you only expect one document, but just in case, break after processing one.
+
 		break
 	}
 	return &webhookData, nil

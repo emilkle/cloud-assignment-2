@@ -14,8 +14,7 @@ var ctx context.Context
 var client *firestore.Client
 var err error
 
-// PopulateFirestoreData populates an emulated Firestore to be used for testing purposes
-func PopulateFirestoreData() {
+func InitializeFirestoreEmulator() {
 	err1 := os.Setenv("FIRESTORE_EMULATOR_HOST", "127.0.0.1:8081")
 	if err1 != nil {
 		log.Printf("error setting environment variable: %v\n", err)
@@ -32,7 +31,10 @@ func PopulateFirestoreData() {
 		log.Fatalf("Failed to connect to Firestore emulator: %v", err)
 		return
 	}
+}
 
+// PopulateFirestoreData populates an emulated Firestore to be used for testing purposes
+func PopulateFirestoreData() {
 	// Define registration data to be inserted in the emulated Firestore
 	registrations := []map[string]interface{}{
 		{
@@ -90,13 +92,13 @@ func PopulateFirestoreData() {
 
 	webhooks := []map[string]interface{}{
 		{
-			"ID":      "awedjhs",
+			"ID":      "1",
 			"URL":     "webhooksite",
 			"Country": "NO",
 			"Event":   "POST",
 		},
 		{
-			"ID":      "awedefdrsajhs",
+			"ID":      "2",
 			"URL":     "webhooksite",
 			"Country": "EN",
 			"Event":   "POST",
@@ -104,18 +106,18 @@ func PopulateFirestoreData() {
 	}
 
 	//Iterate over webhooks and add them to firestore
-	webhookDocs, err3 := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx).GetAll()
-	if err2 != nil {
-		log.Println("Failed to retrieve documents: ", err3.Error())
+	webhookDocs, err4 := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx).GetAll()
+	if err4 != nil {
+		log.Println("Failed to retrieve documents: ", err4.Error())
 		return
 	}
 
-	// Iterate over registrations and add them to Firestore
+	// Iterate over webhooks and add them to Firestore
 	if len(webhookDocs) < 2 {
 		for _, reg := range webhooks {
-			_, _, err3 := client.Collection(resources.WEBHOOK_COLLECTION).Add(ctx, reg)
-			if err3 != nil {
-				log.Printf("Failed to add webhook: %v", err3)
+			_, _, err5 := client.Collection(resources.WEBHOOK_COLLECTION).Add(ctx, reg)
+			if err5 != nil {
+				log.Printf("Failed to add webhook: %v", err5)
 			} else {
 				log.Println("Webhook added to the Firestore collection.")
 			}

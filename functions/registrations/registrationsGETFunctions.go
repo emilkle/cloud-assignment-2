@@ -107,9 +107,8 @@ func GetAllRegisteredDocuments(ctx context.Context, client *firestore.Client) ([
 		// Retrieve the lastChange timestamp from the document.
 		lastChange, ok := data["lastChange"].(string)
 		if !ok {
-			log.Printf("The timestamp of the last change"+
-				" %v could not be converted to string.", data["lastChange"])
-			continue
+			return nil, fmt.Errorf("The timestamp of the last change %v could not be converted to string.",
+				data["lastChange"])
 		}
 
 		// Construct RegistrationsGET struct.
