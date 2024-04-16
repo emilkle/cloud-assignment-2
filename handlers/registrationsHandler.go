@@ -20,10 +20,13 @@ func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 		RegistrationRequestGET(w, r)
 	case http.MethodPost:
 		RegistrationRequestPOST(w, r)
+		WebhookTrigger(http.MethodPost, w, r)
 	case http.MethodPut:
 		RegistrationRequestPUT(w, r)
+		WebhookTrigger(http.MethodPut, w, r)
 	case http.MethodDelete:
 		RegistrationRequestDELETE(w, r)
+		WebhookTrigger(http.MethodDelete, w, r)
 	default:
 		http.Error(w, "REST method '"+r.Method+"' is not supported. Try"+
 			" '"+http.MethodGet+", "+http.MethodPost+", "+http.MethodPut+" "+

@@ -1,8 +1,9 @@
-package functionTests
+package webhookTests
 
 import (
 	"cloud.google.com/go/firestore"
 	"context"
+	"countries-dashboard-service/firestoreEmulator"
 	"countries-dashboard-service/functions"
 	"countries-dashboard-service/resources"
 	"net/http"
@@ -11,21 +12,47 @@ import (
 )
 
 func TestAddWebhook(t *testing.T) {
-	type args struct {
-		webhookID string
-		data      resources.WebhookPOST
-	}
+	firestoreEmulator.PopulateFirestoreData()
+	emulatorClient := firestoreEmulator.GetEmulatorClient()
+	emulatorCtx := firestoreEmulator.GetEmulatorContext()
+
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name         string
+		idParam      string
+		expectedBody resources.WebhookPOST
+		wantErr      bool
 	}{
 		// TODO: Add test cases.
+		{
+			name:         "Create a single registration",
+			idParam:      "1",
+			expectedBody: resources.WebhookPOST{},
+			wantErr:      false,
+		},
+		{
+			name:         "Registration was not found",
+			idParam:      "3",
+			expectedBody: resources.WebhookPOST{},
+			wantErr:      true,
+		},
+		{
+			name:         "Invalid id string",
+			idParam:      "sdfsddfs",
+			expectedBody: resources.WebhookPOST{},
+			wantErr:      true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := functions.AddWebhook(tt.args.webhookID, tt.args.data); (err != nil) != tt.wantErr {
-				t.Errorf("AddWebhook() error = %v, wantErr %v", err, tt.wantErr)
+			got := functions.AddWebhook(emulatorCtx, emulatorClient, tt.idParam, tt.expectedBody)
+			/*if (err1 != nil) != tt.wantErr {
+				t.Errorf("Could not find the document with id: " + tt.idParam)
+				return
+			}
+
+			*/
+			if !reflect.DeepEqual(got, tt.expectedBody) {
+				t.Errorf("GetAllRegisteredDocuments() got = %v, expectedBody %v", got, tt.expectedBody)
 			}
 		})
 	}

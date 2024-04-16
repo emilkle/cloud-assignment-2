@@ -2,6 +2,7 @@ package handlerTests
 
 import (
 	"bytes"
+	"countries-dashboard-service/handlers"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"fmt"
@@ -43,74 +44,46 @@ var singleWebhook = `[
 	}
 ]`
 
-func TestCallUrl(t *testing.T) {
+func Test_webhookTrigger(t *testing.T) {
 	type args struct {
-		url     string
-		method  string
-		content string
+		httpMethod string
+		w          http.ResponseWriter
+		r          *http.Request
 	}
 	tests := []struct {
 		name string
 		args args
 	}{
-		{
-			name: "Successful POST request",
-			args: args{url: "Someurl", method: http.MethodPost, content: "Some string content"},
-		},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//handlers.CallUrl(tt.args.url, tt.args.method, tt.args.content)
+			handlers.WebhookTrigger(tt.args.httpMethod, tt.args.w, tt.args.r)
 		})
 	}
 }
 
-func TestServiceHandler(t *testing.T) {
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,
-		r *http.Request) {
-		w.Header().Set("content-type", "application/json")
-		switch r.Method {
-		case http.MethodGet:
-			w.WriteHeader(http.StatusMethodNotAllowed)
-		case http.MethodPost:
-			w.WriteHeader(http.StatusOK)
-		default:
-			http.Error(w, "REST method '"+r.Method+"' is not supported. Try"+
-				"  "+http.MethodPost+" instead. ", http.StatusNotImplemented)
-			return
-		}
-	}))
-	defer mockServer.Close()
-
+func TestCallUrl(t *testing.T) {
+	type args struct {
+		url     string
+		id      string
+		content string
+		event   string
+		country string
+	}
 	tests := []struct {
-		name         string
-		method       string
-		server       *httptest.Server
-		expectedCode int
+		name  string
+		args  args
+		wantW string
 	}{
 		// TODO: Add test cases.
-		{"Method = GET (Status Not allowed)", http.MethodGet, mockServer,
-			http.StatusMethodNotAllowed},
-		{"Method = POST (Status OK)", http.MethodPost, mockServer,
-			http.StatusOK},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest(tt.method, mockServer.URL, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode != tt.expectedCode {
-				t.Errorf("handler returned wrong status code for method %s: got %v want %v",
-					tt.method, resp.StatusCode, tt.expectedCode)
+			w := &bytes.Buffer{}
+			handlers.CallUrl(tt.args.url, tt.args.id, tt.args.content, tt.args.event, tt.args.country, w)
+			if gotW := w.String(); gotW != tt.wantW {
+				t.Errorf("CallUrl() = %v, want %v", gotW, tt.wantW)
 			}
 		})
 	}

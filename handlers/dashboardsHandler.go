@@ -52,4 +52,5 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error writing response", http.StatusInternalServerError)
 		log.Println("Error writing response", err)
 	}
+	WebhookTrigger(http.MethodGet, w, r)
 }
