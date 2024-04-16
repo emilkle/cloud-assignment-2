@@ -1,4 +1,4 @@
-package functionTests
+package webhookTests
 
 import (
 	"cloud.google.com/go/firestore"
