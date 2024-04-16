@@ -77,23 +77,22 @@ var allRegistrations = []resources.RegistrationsGET{
 	},
 }
 
+var testRegistration = resources.RegistrationsPOSTandPUT{
+	Country: "Spain",
+	IsoCode: "ES",
+	Features: resources.Features{
+		Temperature:      false,
+		Precipitation:    true,
+		Capital:          false,
+		Coordinates:      true,
+		Population:       false,
+		Area:             true,
+		TargetCurrencies: []string{"EUR", "NOK"},
+	},
+}
+
 func TestCreatePOSTRequest(t *testing.T) {
 	SetupFirestoreDatabase()
-
-	testRegistration := resources.RegistrationsPOSTandPUT{
-		Country: "Spain",
-		IsoCode: "ES",
-		Features: resources.Features{
-			Temperature:      false,
-			Precipitation:    true,
-			Capital:          false,
-			Coordinates:      true,
-			Population:       false,
-			Area:             true,
-			TargetCurrencies: []string{"EUR", "NOK"},
-		},
-	}
-
 	invalidRegistrationStructCountry := resources.RegistrationsPOSTandPUT{
 		Country: "",
 		IsoCode: "",
@@ -124,7 +123,8 @@ func TestCreatePOSTRequest(t *testing.T) {
 
 	invalidErrorCountry := errors.New("'country' field is not a string")
 
-	invalidErrorCurrencies := errors.New("element:of 'targetCurrencies' field is not a string")
+	invalidErrorCurrencies := errors.New("element:of 'targetCurrencies' field is not a string, " +
+		"or the array is not a string array")
 
 	tests := []struct {
 		name    string
@@ -159,7 +159,7 @@ func TestCreatePOSTRequest(t *testing.T) {
 
 			got, err := registrations.CreatePOSTRequest(emulatorCtx, emulatorClient, w, tt.data)
 			if err != nil && err.Error() != tt.wantErr.Error() {
-				t.Errorf("CreatePOSTRequest() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("CreatePOSTRequest() error = %v, \n wantErr = %v", err, tt.wantErr)
 				return
 			}
 			if len(got) != len(tt.want) {
@@ -264,20 +264,85 @@ func TestUpdatePOSTRequest(t *testing.T) {
 }
 
 func TestValidateDataTypes(t *testing.T) {
-	type args struct {
-		data resources.RegistrationsPOSTandPUT
-		w    http.ResponseWriter
+	invalidRegistrationStructIsoCodes := resources.RegistrationsPOSTandPUT{
+		Country: "Norway",
+		IsoCode: "",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: []string{"", ""},
+		},
 	}
+
+	invalidRegistrationStructCurrenciesNil := resources.RegistrationsPOSTandPUT{
+		Country: "Norway",
+		IsoCode: "NO",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: nil,
+		},
+	}
+
+	invalidRegistrationStructCurrenciesEmptyStrings := resources.RegistrationsPOSTandPUT{
+		Country: "Norway",
+		IsoCode: "NO",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: []string{"", ""},
+		},
+	}
+
+	invalidErrorIsoCode := errors.New("'isoCode' field is not a string")
+
+	invalidErrorTargetCurrencies := errors.New("element:of 'targetCurrencies' field is not a string, " +
+		"or the array is not a string array")
+
 	tests := []struct {
 		name    string
-		args    args
-		wantErr bool
+		data    resources.RegistrationsPOSTandPUT
+		wantErr error
 	}{
 		// TODO: Add test cases.
+		{
+			name:    "The POST request body has no invalid field formats",
+			data:    testRegistration,
+			wantErr: nil,
+		},
+		{
+			name:    "The POST request body has an invalid isoCode field format",
+			data:    invalidRegistrationStructIsoCodes,
+			wantErr: invalidErrorIsoCode,
+		},
+		{
+			name:    "The POST request body has a targetCurrencies field that is nil",
+			data:    invalidRegistrationStructCurrenciesNil,
+			wantErr: invalidErrorTargetCurrencies,
+		},
+		{
+			name: "The POST request body has an invalid targetCurrency field where one" +
+				" or more of the currencies are empty strings",
+			data:    invalidRegistrationStructCurrenciesEmptyStrings,
+			wantErr: invalidErrorTargetCurrencies,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := registrations.ValidateDataTypes(tt.args.data, tt.args.w); (err != nil) != tt.wantErr {
+			w := httptest.NewRecorder()
+			if err := registrations.ValidateDataTypes(tt.data, w); err != nil && err.Error() != tt.wantErr.Error() {
 				t.Errorf("ValidateDataTypes() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

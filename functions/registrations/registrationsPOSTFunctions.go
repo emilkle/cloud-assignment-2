@@ -88,7 +88,8 @@ func ValidateDataTypes(data resources.RegistrationsPOSTandPUT, w http.ResponseWr
 	targetCurrencies := data.Features.TargetCurrencies
 	for _, tc := range targetCurrencies {
 		if (reflect.TypeOf(tc) != reflect.TypeOf("")) || tc == "" || targetCurrencies == nil {
-			err := errors.New("element:" + tc + "of 'targetCurrencies' field is not a string")
+			err := errors.New("element:" + tc + "of 'targetCurrencies' field is not a string, " +
+				"or the array is not a string array")
 			log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
 			http.Error(w, "Please use a 'string' as datatype for the elements in the targetCurrencies array.",
 				http.StatusForbidden)
