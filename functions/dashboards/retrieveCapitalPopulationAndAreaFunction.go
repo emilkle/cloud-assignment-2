@@ -30,6 +30,8 @@ func RetrieveCapitalPopulationAndArea(isoCode string, id int, runTest bool) (res
 		return resources.CapitalPopulationArea{}, fmt.Errorf("HTTP error: %s", response.Status)
 	}
 
+	log.Printf("DEBUGGING capital, population, area: %v", response)
+
 	// Decode the JSON response
 	var capPopArea []resources.CapitalPopulationArea
 	err = json.NewDecoder(response.Body).Decode(&capPopArea)
