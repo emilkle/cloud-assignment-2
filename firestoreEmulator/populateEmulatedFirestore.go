@@ -87,6 +87,39 @@ func PopulateFirestoreData() {
 	} else {
 		log.Println("There are already 2 documents in the collection. Skipping document addition.")
 	}
+
+	webhooks := []map[string]interface{}{
+		{
+			"ID":      "awedjhs",
+			"URL":     "webhooksite",
+			"Country": "NO",
+			"Event":   "POST",
+		},
+		{
+			"ID":      "awedefdrsajhs",
+			"URL":     "webhooksite",
+			"Country": "EN",
+			"Event":   "POST",
+		},
+	}
+
+	//Iterate over webhooks and add them to firestore
+	for _, reg := range webhooks {
+		documentSnapshot, err4 := client.
+			Collection(resources.WEBHOOK_COLLECTION).Doc(fmt.Sprintf("%d", reg["id"])).Get(ctx)
+		if documentSnapshot.Exists() || err4 != nil {
+			// Document with the same ID already exists
+			log.Printf("Document with ID %d already exists, skipping.", reg["id"])
+			continue
+		}
+
+		_, _, err5 := client.Collection(resources.WEBHOOK_COLLECTION).Add(ctx, reg)
+		if err5 != nil {
+			log.Printf("Failed to add webhook: %v", err5)
+		} else {
+			log.Println("Webhook added to the Firestore collection.")
+		}
+	}
 }
 
 // Server function to handle HTTP requests to populate Emulated Firestore

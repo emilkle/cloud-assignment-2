@@ -1,9 +1,11 @@
 package functionTests
 
 import (
+	"cloud.google.com/go/firestore"
 	"context"
 	"countries-dashboard-service/functions"
 	"countries-dashboard-service/resources"
+	"net/http"
 	"reflect"
 	"testing"
 )
@@ -59,15 +61,16 @@ func TestDeleteWebhook(t *testing.T) {
 
 func TestGenerateID(t *testing.T) {
 	tests := []struct {
-		name string
-		want string
+		name       string
+		wantlength int
 	}{
-		// TODO: Add test cases.
+		{name: "Successful generation", wantlength: 36},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := functions.GenerateID(); got != tt.want {
-				t.Errorf("GenerateID() = %v, want %v", got, tt.want)
+			got := functions.GenerateID()
+			if len(got) != tt.wantlength {
+				t.Errorf("GenerateID() length = %v, want %v", len(got), tt.wantlength)
 			}
 		})
 	}
@@ -77,6 +80,8 @@ func TestGetAllWebhooks(t *testing.T) {
 	type args struct {
 		ctx    context.Context
 		client *firestore.Client
+		w      http.ResponseWriter
+		data   resources.WebhookGET
 	}
 	tests := []struct {
 		name    string
