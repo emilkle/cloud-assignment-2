@@ -1,6 +1,7 @@
 package functionTests
 
 import (
+	"cloud.google.com/go/firestore"
 	"context"
 	"countries-dashboard-service/functions"
 	"countries-dashboard-service/resources"

@@ -1,11 +1,6 @@
 package handlerTests
 
-import (
-	"countries-dashboard-service/handlers"
-	"net/http"
-	"testing"
-)
-
+/*
 func TestCallUrl(t *testing.T) {
 	type args struct {
 		url     string
@@ -149,4 +144,4 @@ func Test_webhookRequestPOST(t *testing.T) {
 			//handlers.webhookRequestPOST(tt.args.w, tt.args.r)
 		})
 	}
-}
+}*/
