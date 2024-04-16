@@ -57,7 +57,11 @@ func webhookRequestPOST(w http.ResponseWriter, r *http.Request) {
 
 	// Generate response from id
 	response := resources.WebhookPOSTResponse{ID: id}
+
+	// Set header
 	w.Header().Set("Content-Type", "application/json")
+
+	// Encode response
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		http.Error(w, "Something went during encoding: "+err.Error(), http.StatusBadRequest)
