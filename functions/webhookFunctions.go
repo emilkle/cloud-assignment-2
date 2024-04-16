@@ -3,7 +3,6 @@ package functions
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	"countries-dashboard-service/database"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"fmt"
@@ -23,10 +22,7 @@ func GenerateID() string {
 }
 
 // Adds a webhook to the firestore database
-func AddWebhook(webhookID string, data resources.WebhookPOST) error {
-	ctx := database.GetFirestoreContext()
-	client := database.GetFirestoreClient()
-
+func AddWebhook(ctx context.Context, client *firestore.Client, webhookID string, data resources.WebhookPOST) error {
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 
 	// Encode data struct as JSON byte slice

@@ -44,25 +44,7 @@ var singleWebhook = `[
 ]`
 
 func TestCallUrl(t *testing.T) {
-	type args struct {
-		url     string
-		method  string
-		content string
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "Successful POST request",
-			args: args{url: "Someurl", method: http.MethodPost, content: "Some string content"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			//handlers.CallUrl(tt.args.url, tt.args.method, tt.args.content)
-		})
-	}
+
 }
 
 func TestServiceHandler(t *testing.T) {

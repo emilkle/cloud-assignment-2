@@ -49,7 +49,9 @@ func webhookRequestPOST(w http.ResponseWriter, r *http.Request) {
 
 	// Generate ID and assign it to webhook struct
 	id := functions.GenerateID()
-	err = functions.AddWebhook(id, webhook)
+	client := database.GetFirestoreClient()
+	ctx := database.GetFirestoreContext()
+	err = functions.AddWebhook(ctx, client, id, webhook)
 	if err != nil {
 		log.Println("handle the error", err)
 	}
@@ -152,7 +154,7 @@ func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodPost:
-		webhookTrigger(w, r)
+		webhookTrigger(http.MethodPost, w, r)
 	default:
 		// Edit in the correct constant when done implementing webhooks
 		http.Error(w, "Method "+r.Method+" not supported for "+resources.WebhookInv, http.StatusMethodNotAllowed)
@@ -162,14 +164,37 @@ func ServiceHandler(w http.ResponseWriter, r *http.Request) {
 /*
 Calls given URL with given content and awaits response (status and body).
 */
-func CallUrl(url string, content string, webhook *resources.WebhookGET, w io.Writer) {
+func CallUrl(url string, id string, content string, event, country string, w io.Writer) {
 	log.Println("Attempting invocation of url " + url + " with content '" + content + "'.")
 	//res, err := http.Post(url, "text/plain", bytes.NewReader([]byte(content)))
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader([]byte(content)))
-	if err != nil {
-		log.Printf("%v", "Error during request creation. Error:", err)
-		return
+	//req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader([]byte(content)))
+	//log.Println("POST was made to " + url + " .... Nice")
+	//if err != nil {
+	//	log.Printf("%v", "Error during request creation. Error:", err)
+	//	return
+	//}
+
+	//if res.StatusCode == http.StatusOK {
+	//	log.Println("Statuscode = statuscode", res.StatusCode)
+
+	payload := map[string]interface{}{
+		"ID":      id,
+		"Country": country,
+		"Event":   event,
+		"time":    time.Now().Format(time.RFC3339),
 	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Println("Error marshaling payload: ", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		log.Println("Error creating request: ", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
 
 	/// BEGIN: HEADER GENERATION FOR CONTENT-BASED VALIDATION
 
@@ -193,38 +218,13 @@ func CallUrl(url string, content string, webhook *resources.WebhookGET, w io.Wri
 		return
 	}
 
-	if res.StatusCode == http.StatusOK {
-		log.Println("Statuscode = statuscode", res.StatusCode)
-		country := webhook.Country
-		id := webhook.ID
-
-		response := resources.WebhookInvocation{
-			ID:      id,
-			Country: country,
-			Event:   webhook.Event,
-			Time:    time.Now().Format(time.RFC3339),
-		}
-
-		err3 := json.NewEncoder(w).Encode(response)
-		log.Println(response)
-		if err3 != nil {
-			log.Println("Error encoding response: ", err3)
-		}
-	} else {
-		// Handle unsuccessful response (e.g., log error, return a different response object)
-		log.Println("Webhook invocation unsuccessful. Received status code:", res.StatusCode)
-
-	}
-
-	// Read the response
-	response, err := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println("Something is wrong with invocation response. Error:", err)
-		return
+		log.Println("Error reading response body: ", err)
 	}
 
 	log.Println("Webhook " + url + " invoked. Received status code " + strconv.Itoa(res.StatusCode) +
-		" and body: " + string(response))
+		" and body: " + string(body))
 }
 
 /*
@@ -277,7 +277,7 @@ func DefaultClientHandler(w http.ResponseWriter, r *http.Request) {
 Also need to implement events checks on dashboard handler for when dashboard is invoked/populated with values
 When configuration is modified(registration put), deleted (registration delete) and registered (registration post).
 */
-func webhookTrigger(w http.ResponseWriter, r *http.Request) {
+func webhookTrigger(method string, w http.ResponseWriter, r *http.Request) {
 	ctx := database.GetFirestoreContext()
 	client := database.GetFirestoreClient()
 
@@ -289,14 +289,6 @@ func webhookTrigger(w http.ResponseWriter, r *http.Request) {
 	}
 
 	urlFromRequest := webhookRequest.URL
-	/*
-		, ok := data["URL"].(string)
-
-		if !ok {
-			log.Fatal("Missing 'url' field in request body")
-		}
-
-	*/
 
 	var webhooks, err2 = functions.GetAllWebhooks(ctx, client)
 	if err2 != nil {
@@ -319,23 +311,7 @@ func webhookTrigger(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, webhook := range matchingWebhooks {
-		go CallUrl(webhook.URL, urlFromRequest, webhook, w)
-		log.Println("Calling CallUrl")
+		go CallUrl(webhook.URL, webhook.ID, urlFromRequest, method, webhook.Country, w)
 	}
-
-	/*
-		log.Println("Received POST request...")
-		// Iterate through registered webhooks and invoke based on registered URL, method, and with received content
-		var webhooks, _ = functions.GetAllWebhooks(ctx, client)
-		if err != nil {
-			log.Println("TODO Handle this error later", err)
-		}
-		for _, v := range webhooks {
-			log.Println("Trigger event: Call to service endpoint with method " + v.Event +
-				" and content '" + string(str) + "'.")
-
-		}
-
-	*/
 
 }
