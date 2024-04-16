@@ -30,26 +30,26 @@ func AddWebhook(webhookID string, data resources.WebhookPOST) error {
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 
 	// Encode data struct as JSON byte slice
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Errorf("error marshalling webhook data: %v", err)
+	jsonData, err1 := json.Marshal(data)
+	if err1 != nil {
+		return fmt.Errorf("error marshalling webhook data: %v", err1)
 	}
 
 	var webhook resources.WebhookGET
-	err = json.Unmarshal(jsonData, &webhook)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling webhook data: %v", err)
+	err2 := json.Unmarshal(jsonData, &webhook)
+	if err2 != nil {
+		return fmt.Errorf("error unmarshalling webhook data: %v", err2)
 	}
 
 	// Create a new document with a unique ID
-	_, _, err = ref.Add(ctx, map[string]interface{}{
+	_, _, err3 := ref.Add(ctx, map[string]interface{}{
 		"ID":      webhookID,
 		"URL":     webhook.URL,
 		"Country": webhook.Country,
 		"Event":   webhook.Event,
 	})
-	if err != nil {
-		return fmt.Errorf("error adding webhook: %v", err)
+	if err3 != nil {
+		return fmt.Errorf("error adding webhook: %v", err3)
 	}
 
 	log.Printf("Webhook with ID %s successfully added", webhook.ID)
@@ -63,9 +63,9 @@ func DeleteWebhook(ctx context.Context, client *firestore.Client, structID strin
 	query := ref.Where("ID", "==", structID).Limit(1)
 
 	// Get all documents matching the query
-	docs, err := query.Documents(ctx).GetAll()
-	if err != nil {
-		return nil, err
+	docs, err1 := query.Documents(ctx).GetAll()
+	if err1 != nil {
+		return nil, err1
 	}
 
 	// Check if any documents were found
@@ -74,9 +74,9 @@ func DeleteWebhook(ctx context.Context, client *firestore.Client, structID strin
 	}
 
 	// Delete the first document
-	_, err = docs[0].Ref.Delete(ctx)
-	if err != nil {
-		return nil, err
+	_, err2 := docs[0].Ref.Delete(ctx)
+	if err2 != nil {
+		return nil, err2
 	}
 
 	log.Printf("Document with webhook ID %v successfully deleted\n", structID)
@@ -121,9 +121,9 @@ func GetWebhook(ctx context.Context, client *firestore.Client, webhookID string)
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 	query := ref.Where("ID", "==", webhookID).Limit(1)
 
-	docs, err := query.Documents(ctx).GetAll()
-	if err != nil {
-		return nil, err
+	docs, err1 := query.Documents(ctx).GetAll()
+	if err1 != nil {
+		return nil, err1
 	}
 
 	if len(docs) == 0 {
@@ -133,8 +133,8 @@ func GetWebhook(ctx context.Context, client *firestore.Client, webhookID string)
 	// Extract data from the document
 	var webhookData resources.WebhookGET
 	for _, doc := range docs {
-		if err := doc.DataTo(&webhookData); err != nil {
-			return nil, err
+		if err2 := doc.DataTo(&webhookData); err2 != nil {
+			return nil, err2
 		}
 		// Since you're using Limit(1), you only expect one document, but just in case, break after processing one.
 		break

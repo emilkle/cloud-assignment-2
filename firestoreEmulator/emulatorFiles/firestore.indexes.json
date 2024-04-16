@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "Registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id", "order": "ASCENDING" },
+        { "fieldPath": "LastChange", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

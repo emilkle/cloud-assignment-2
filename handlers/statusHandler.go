@@ -26,6 +26,8 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	status["countries_api"] = functions.CheckEndpointStatus(resources.REST_COUNTRIES_PATH + "/alpha/no/")
 	status["currency_api"] = functions.CheckEndpointStatus(resources.CURRENCY_PATH + "NOK/")
 	status["meteo_api"] = functions.CheckEndpointStatus(resources.OPEN_METEO_PATH)
+	status["notification_db"] = functions.CheckEndpointStatus(resources.NOTIFICATIONS_PATH)
+	// TODO: Add number of webhooks
 
 	//Calculate time since server started
 	uptime := time.Since(startTime).Seconds()
@@ -35,6 +37,7 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 		status["countries_api"],
 		status["meteo_api"],
 		status["currency_api"],
+		status["notification_db"],
 		"V1",
 		uptime,
 	}
