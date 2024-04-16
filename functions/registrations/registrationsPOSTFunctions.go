@@ -15,7 +15,7 @@ import (
 // ValidateDataTypes validates the data structure representing a POST-registration or a PUT-registration payload.
 func ValidateDataTypes(data resources.RegistrationsPOSTandPUT, w http.ResponseWriter) error {
 	// Check if the 'country' field is a string
-	if reflect.TypeOf(data.Country) != reflect.TypeOf("") {
+	if reflect.TypeOf(data.Country) != reflect.TypeOf("") || data.Country == "" {
 		err := errors.New("'country' field is not a string")
 		log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
 		http.Error(w, "Please use a 'string' as datatype for the country field.", http.StatusForbidden)
@@ -23,7 +23,7 @@ func ValidateDataTypes(data resources.RegistrationsPOSTandPUT, w http.ResponseWr
 	}
 
 	// Check if the 'isoCode' field is a string
-	if reflect.TypeOf(data.IsoCode) != reflect.TypeOf("") {
+	if reflect.TypeOf(data.IsoCode) != reflect.TypeOf("") || data.IsoCode == "" {
 		err := errors.New("'isoCode' field is not a string")
 		log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
 		http.Error(w, "Please use a 'string' as datatype for the isoCode field.", http.StatusForbidden)
@@ -87,8 +87,9 @@ func ValidateDataTypes(data resources.RegistrationsPOSTandPUT, w http.ResponseWr
 	// Check if the 'targetCurrencies' field is a slice of strings
 	targetCurrencies := data.Features.TargetCurrencies
 	for _, tc := range targetCurrencies {
-		if reflect.TypeOf(tc) != reflect.TypeOf("") {
-			err := errors.New("element:" + tc + "of 'targetCurrencies' field is not a string")
+		if (reflect.TypeOf(tc) != reflect.TypeOf("")) || tc == "" || targetCurrencies == nil {
+			err := errors.New("element:" + tc + "of 'targetCurrencies' field is not a string, " +
+				"or the array is not a string array")
 			log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
 			http.Error(w, "Please use a 'string' as datatype for the elements in the targetCurrencies array.",
 				http.StatusForbidden)
@@ -108,6 +109,7 @@ func CreatePOSTRequest(ctx context.Context, client *firestore.Client, w http.Res
 		log.Println("The document has incorrect datatypes:", err.Error())
 		http.Error(w, "The input datatypes or document structure is incorrect. Please use the following"+
 			"format to add a new document: "+resources.JSON_STRUCT_POST_AND_PUT, http.StatusInternalServerError)
+		return "", err
 	} else {
 
 		// Construct registration document data.
@@ -131,13 +133,13 @@ func CreatePOSTRequest(ctx context.Context, client *firestore.Client, w http.Res
 		if err1 != nil {
 			log.Println("An error occurred when creating a new document:", err1.Error())
 			http.Error(w, "An error occurred when creating a new document.", http.StatusInternalServerError)
+			return "", err1
 		} else {
 			log.Println("Document added to the registrations collection. " +
 				"Identifier of the added document: " + newDocumentRef.ID)
 		}
 		return newDocumentRef.ID, nil
 	}
-	return "", nil
 }
 
 // CreatePOSTResponse creates a response for a successful POST request.

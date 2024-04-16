@@ -1,13 +1,13 @@
 package registrationsTests
 
 import (
-	"cloud.google.com/go/firestore"
-	"context"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -76,30 +76,94 @@ var allRegistrations = []resources.RegistrationsGET{
 	},
 }
 
+var testRegistration = resources.RegistrationsPOSTandPUT{
+	Country: "Spain",
+	IsoCode: "ES",
+	Features: resources.Features{
+		Temperature:      false,
+		Precipitation:    true,
+		Capital:          false,
+		Coordinates:      true,
+		Population:       false,
+		Area:             true,
+		TargetCurrencies: []string{"EUR", "NOK"},
+	},
+}
+
 func TestCreatePOSTRequest(t *testing.T) {
-	type args struct {
-		ctx    context.Context
-		client *firestore.Client
-		w      http.ResponseWriter
-		data   resources.RegistrationsPOSTandPUT
+	SetupFirestoreDatabase()
+	invalidRegistrationStructCountry := resources.RegistrationsPOSTandPUT{
+		Country: "",
+		IsoCode: "",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: nil,
+		},
 	}
+
+	invalidRegistrationStructCurrencies := resources.RegistrationsPOSTandPUT{
+		Country: "Norway",
+		IsoCode: "NO",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: []string{"", ""},
+		},
+	}
+
+	invalidErrorCountry := errors.New("'country' field is not a string")
+
+	invalidErrorCurrencies := errors.New("element:of 'targetCurrencies' field is not a string, " +
+		"or the array is not a string array")
+
 	tests := []struct {
 		name    string
-		args    args
+		data    resources.RegistrationsPOSTandPUT
 		want    string
-		wantErr bool
+		wantErr error
 	}{
 		// TODO: Add test cases.
+		{
+			name: "The POST request is valid and the length of the document id is correct," +
+				" and thus the document is added",
+			data:    testRegistration,
+			want:    "1234567890polikjas23",
+			wantErr: nil,
+		},
+		{
+			name:    "The POST request body has an invalid country field format",
+			data:    invalidRegistrationStructCountry,
+			want:    "",
+			wantErr: invalidErrorCountry,
+		},
+		{
+			name:    "The POST request body has an invalid targetCurrency field format",
+			data:    invalidRegistrationStructCurrencies,
+			want:    "",
+			wantErr: invalidErrorCurrencies,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := registrations.CreatePOSTRequest(tt.args.ctx, tt.args.client, tt.args.w, tt.args.data)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreatePOSTRequest() error = %v, wantErr %v", err, tt.wantErr)
+			w := httptest.NewRecorder()
+
+			got, err := registrations.CreatePOSTRequest(emulatorCtx, emulatorClient, w, tt.data)
+			if err != nil && err.Error() != tt.wantErr.Error() {
+				t.Errorf("CreatePOSTRequest() error = %v, \n wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("CreatePOSTRequest() got = %v, expectedBody %v", got, tt.want)
+			if len(got) != len(tt.want) {
+				t.Errorf("CreatePOSTRequest() got document ID with length = %v, "+
+					"expected document ID with length  %v", len(got), len(tt.want))
 			}
 		})
 	}
@@ -123,8 +187,8 @@ func TestCreatePOSTResponse(t *testing.T) {
 			LastChange: "20240229 14:07",
 		}
 
-		jsonResponse, err := json.Marshal(postResponse)
-		if err != nil {
+		jsonResponse, err1 := json.Marshal(postResponse)
+		if err1 != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -178,41 +242,146 @@ func TestCreatePOSTResponse(t *testing.T) {
 }
 
 func TestUpdatePOSTRequest(t *testing.T) {
-	type args struct {
-		ctx          context.Context
-		client       *firestore.Client
-		w            http.ResponseWriter
+	SetupFirestoreDatabase()
+
+	var postRegistration = map[string]interface{}{
+		"country": "Denmark",
+		"isoCode": "DK",
+		"features": map[string]interface{}{
+			"temperature":      true,
+			"precipitation":    true,
+			"capital":          true,
+			"coordinates":      true,
+			"population":       true,
+			"area":             false,
+			"targetCurrencies": []interface{}{"EUR", "USD", "SEK"},
+		},
+	}
+
+	newDocumentRef, _, err1 := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Add(emulatorCtx,
+		postRegistration)
+	if err1 != nil {
+		log.Println("An error occurred when creating a new document:", err1.Error())
+	}
+
+	postResponse := resources.RegistrationsPOSTResponse{
+		Id:         3,
+		LastChange: "20240405 18:07",
+	}
+
+	documentID := newDocumentRef.ID
+
+	tests := []struct {
+		name         string
 		documentID   string
 		postResponse resources.RegistrationsPOSTResponse
-	}
-	tests := []struct {
-		name string
-		args args
+		expectedCode int
 	}{
 		// TODO: Add test cases.
+		{
+			name:         "The POST request body was successfully updated",
+			documentID:   documentID,
+			postResponse: postResponse,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "The lastChange and id fields could not be updated",
+			documentID:   "",
+			postResponse: postResponse,
+			expectedCode: http.StatusInternalServerError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			registrations.UpdatePOSTRequest(tt.args.ctx, tt.args.client, tt.args.w, tt.args.documentID, tt.args.postResponse)
+			w := httptest.NewRecorder()
+			registrations.UpdatePOSTRequest(emulatorCtx, emulatorClient, w, tt.documentID, tt.postResponse)
+			if w.Code != tt.expectedCode {
+				t.Errorf("Expected HTTP status code %d, but got %d", http.StatusInternalServerError, w.Code)
+			}
 		})
 	}
 }
 
 func TestValidateDataTypes(t *testing.T) {
-	type args struct {
-		data resources.RegistrationsPOSTandPUT
-		w    http.ResponseWriter
+	invalidRegistrationStructIsoCodes := resources.RegistrationsPOSTandPUT{
+		Country: "Norway",
+		IsoCode: "",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: []string{"", ""},
+		},
 	}
+
+	invalidRegistrationStructCurrenciesNil := resources.RegistrationsPOSTandPUT{
+		Country: "Norway",
+		IsoCode: "NO",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: nil,
+		},
+	}
+
+	invalidRegistrationStructCurrenciesEmptyStrings := resources.RegistrationsPOSTandPUT{
+		Country: "Norway",
+		IsoCode: "NO",
+		Features: resources.Features{
+			Temperature:      false,
+			Precipitation:    false,
+			Capital:          false,
+			Coordinates:      false,
+			Population:       false,
+			Area:             false,
+			TargetCurrencies: []string{"", ""},
+		},
+	}
+
+	invalidErrorIsoCode := errors.New("'isoCode' field is not a string")
+
+	invalidErrorTargetCurrencies := errors.New("element:of 'targetCurrencies' field is not a string, " +
+		"or the array is not a string array")
+
 	tests := []struct {
 		name    string
-		args    args
-		wantErr bool
+		data    resources.RegistrationsPOSTandPUT
+		wantErr error
 	}{
 		// TODO: Add test cases.
+		{
+			name:    "The POST request body has no invalid field formats",
+			data:    testRegistration,
+			wantErr: nil,
+		},
+		{
+			name:    "The POST request body has an invalid isoCode field format",
+			data:    invalidRegistrationStructIsoCodes,
+			wantErr: invalidErrorIsoCode,
+		},
+		{
+			name:    "The POST request body has a targetCurrencies field that is nil",
+			data:    invalidRegistrationStructCurrenciesNil,
+			wantErr: invalidErrorTargetCurrencies,
+		},
+		{
+			name: "The POST request body has an invalid targetCurrency field where one" +
+				" or more of the currencies are empty strings",
+			data:    invalidRegistrationStructCurrenciesEmptyStrings,
+			wantErr: invalidErrorTargetCurrencies,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := registrations.ValidateDataTypes(tt.args.data, tt.args.w); (err != nil) != tt.wantErr {
+			w := httptest.NewRecorder()
+			if err := registrations.ValidateDataTypes(tt.data, w); err != nil && err.Error() != tt.wantErr.Error() {
 				t.Errorf("ValidateDataTypes() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
