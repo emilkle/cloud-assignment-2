@@ -39,9 +39,10 @@ type Features struct {
 
 // StatusResponse struct for the status response body
 type StatusResponse struct {
-	CountriesApi int `json:"countries_api"`
-	MeteoApi     int `json:"meteo_api"`
-	CurrencyApi  int `json:"currency_api"`
+	CountriesApi   int `json:"countries_api"`
+	MeteoApi       int `json:"meteo_api"`
+	CurrencyApi    int `json:"currency_api"`
+	NotificationDB int `json:"notification_db"`
 	//add notification_db and webhook
 	Version string  `json:"version"`
 	Uptime  float64 `json:"uptime"`
