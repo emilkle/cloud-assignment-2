@@ -1,6 +1,5 @@
 package handlerTests
 
-/*
 import (
 	"bytes"
 	"countries-dashboard-service/handlers"
@@ -46,6 +45,7 @@ var singleWebhook = `[
 ]`
 
 func Test_webhookTrigger(t *testing.T) {
+
 	type args struct {
 		httpMethod string
 		w          http.ResponseWriter
@@ -407,6 +407,3 @@ func Test_webhookRequestPOST(t *testing.T) {
 		})
 	}
 }
-
-
-*/

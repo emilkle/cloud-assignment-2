@@ -4,13 +4,14 @@ import (
 	"cloud.google.com/go/firestore"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
+	"countries-dashboard-service/tests/functionTests"
 	"log"
 	"reflect"
 	"testing"
 )
 
 func TestDeleteDocumentWithRequestedId(t *testing.T) {
-	SetupFirestoreDatabase()
+	functionTests.SetupFirestoreDatabase(resources.REGISTRATIONS_PATH)
 
 	tests := []struct {
 		name         string
@@ -54,7 +55,7 @@ func TestDeleteDocumentWithRequestedId(t *testing.T) {
 }
 
 func TestFindDocumentWithId(t *testing.T) {
-	SetupFirestoreDatabase()
+	functionTests.SetupFirestoreDatabase(resources.REGISTRATIONS_PATH)
 
 	tests := []struct {
 		name           string

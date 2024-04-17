@@ -3,6 +3,7 @@ package registrationsTests
 import (
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
+	"countries-dashboard-service/tests/functionTests"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,8 @@ import (
 	"testing"
 )
 
+var emulatorClient = functionTests.GetEmulatorClient()
+var emulatorCtx = functionTests.GetEmulatorCtx()
 var allRegistrations = []resources.RegistrationsGET{
 	{
 		Id:      1,
@@ -91,7 +94,7 @@ var testRegistration = resources.RegistrationsPOSTandPUT{
 }
 
 func TestCreatePOSTRequest(t *testing.T) {
-	SetupFirestoreDatabase()
+	functionTests.SetupFirestoreDatabase(resources.REGISTRATIONS_PATH)
 	invalidRegistrationStructCountry := resources.RegistrationsPOSTandPUT{
 		Country: "",
 		IsoCode: "",
@@ -242,7 +245,7 @@ func TestCreatePOSTResponse(t *testing.T) {
 }
 
 func TestUpdatePOSTRequest(t *testing.T) {
-	SetupFirestoreDatabase()
+	functionTests.SetupFirestoreDatabase(resources.REGISTRATIONS_PATH)
 
 	var postRegistration = map[string]interface{}{
 		"country": "Denmark",

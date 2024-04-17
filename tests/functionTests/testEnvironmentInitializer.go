@@ -1,4 +1,4 @@
-package registrationsTests
+package functionTests
 
 import (
 	"cloud.google.com/go/firestore"
@@ -12,13 +12,21 @@ import (
 var emulatorClient *firestore.Client
 var emulatorCtx context.Context
 
+func GetEmulatorClient() *firestore.Client {
+	return emulatorClient
+}
+
+func GetEmulatorCtx() context.Context {
+	return emulatorCtx
+}
+
 // SetupFirestoreDatabase resets the firestore emulator before each test.
-func SetupFirestoreDatabase() {
+func SetupFirestoreDatabase(collectionPath string) {
 	firestoreEmulator.InitializeFirestoreEmulator()
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
 	emulatorCtx = firestoreEmulator.GetEmulatorContext()
 
-	iter := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
+	iter := emulatorClient.Collection(collectionPath).
 		OrderBy("lastChange", firestore.Asc).Documents(emulatorCtx)
 
 	for {
@@ -36,5 +44,13 @@ func SetupFirestoreDatabase() {
 		}
 	}
 
-	firestoreEmulator.PopulateFirestoreData()
+	if collectionPath == resources.REGISTRATIONS_PATH {
+		firestoreEmulator.PopulateFirestoreWithRegistrations()
+	}
+	if collectionPath == resources.WEBHOOK_COLLECTION {
+		firestoreEmulator.PopulateFirestoreWithWebhooks()
+	} else {
+		log.Println("Wrong path has been passed as parameter")
+	}
+
 }
