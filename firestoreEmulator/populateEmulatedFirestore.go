@@ -96,14 +96,14 @@ func PopulateFirestoreWithWebhooks() {
 	webhooks := []map[string]interface{}{
 		{
 			"ID":      "1",
-			"URL":     "webhooksite",
+			"URL":     "URL1",
 			"Country": "NO",
 			"Event":   "POST",
 		},
 		{
 			"ID":      "2",
-			"URL":     "webhooksite",
-			"Country": "EN",
+			"URL":     "URL2",
+			"Country": "NO",
 			"Event":   "POST",
 		},
 	}

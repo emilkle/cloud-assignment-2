@@ -4,7 +4,6 @@ import (
 	"cloud.google.com/go/firestore"
 	"context"
 	"countries-dashboard-service/resources"
-	"encoding/json"
 	"fmt"
 	uuid2 "github.com/google/uuid"
 	"google.golang.org/api/iterator"
@@ -27,31 +26,16 @@ func GenerateID() string {
 func AddWebhook(ctx context.Context, client *firestore.Client, webhookID string, data resources.WebhookPOST) error {
 	ref := client.Collection(resources.WEBHOOK_COLLECTION)
 
-	// Encode data struct as JSON byte slice
-	jsonData, err1 := json.Marshal(data)
-	if err1 != nil {
-		return fmt.Errorf("error marshalling webhook data: %v", err1)
-	}
-
-	// Unmarshal the webhook variable
-	var webhook resources.WebhookGET
-	err2 := json.Unmarshal(jsonData, &webhook)
-	if err2 != nil {
-		return fmt.Errorf("error unmarshalling webhook data: %v", err2)
-	}
-
 	// Create a new document with a unique ID
 	_, _, err3 := ref.Add(ctx, map[string]interface{}{
 		"ID":      webhookID,
-		"URL":     webhook.URL,
-		"Country": webhook.Country,
-		"Event":   webhook.Event,
+		"URL":     data.URL,
+		"Country": data.Country,
+		"Event":   data.Event,
 	})
 	if err3 != nil {
 		return fmt.Errorf("error adding webhook: %v", err3)
 	}
-
-	log.Printf("Webhook with ID %s successfully added", webhook.ID)
 	return nil
 }
 
