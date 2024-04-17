@@ -13,9 +13,6 @@ import (
 
 // RetrieveDashboardData fetches the dashboard data from Firestore DB
 func RetrieveDashboardData(client *firestore.Client, ctx context.Context, dashboardId string) ([]*firestore.DocumentSnapshot, int, error) {
-	//client := database.GetFirestoreClient()
-	//ctx := database.GetFirestoreContext()
-
 	idNumber, err := strconv.Atoi(dashboardId)
 	if err != nil {
 		log.Printf("Failed to parse ID: %s. Error: %s", dashboardId, err)
@@ -23,8 +20,6 @@ func RetrieveDashboardData(client *firestore.Client, ctx context.Context, dashbo
 	}
 	query := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==", idNumber).Limit(1)
 	documents, err := query.Documents(ctx).GetAll()
-	data := documents[0].Data()
-	log.Printf("documents snapshot: %+v", data)
 	if err != nil {
 		log.Printf("Failed to fetch documents. Error: %s", err)
 		return nil, 0, err
@@ -39,6 +34,7 @@ func RetrieveDashboardGet(client *firestore.Client, ctx context.Context, dashboa
 		return resources.DashboardsGet{}, err
 	}
 
+	// Check if documents contain documents
 	if len(documents) == 0 {
 		err := fmt.Errorf("no document found with ID: %s", dashboardId)
 		log.Println(err)
@@ -111,15 +107,11 @@ func RetrieveDashboardGet(client *firestore.Client, ctx context.Context, dashboa
 		}
 	}
 
-	log.Printf("DEBUGGING features data: %+v", featuresData)
 	//Exchange rates are always shown in a dashboard
 	selectedExchangeRates, err = RetrieveTargetCurrenciesAndExchangeRates(featuresData, idNumber, runTest)
 	if err != nil {
 		return resources.DashboardsGet{}, err
 	}
-
-	//DEBUGGING
-	fmt.Println("selectedExchangeRates:", selectedExchangeRates)
 
 	// Returns dashboard populated with values depending on the configuration
 	return resources.DashboardsGet{
@@ -161,7 +153,7 @@ func CalculateMeanTemperatureAndPrecipitation(tempAndPrecip resources.HourlyData
 		}
 	}
 	meanPrecipitation = sumPrecipitation / float64(len(tempAndPrecip.Time))
-	// Rund meanPrecipitation to have two decimals
+	// Round meanPrecipitation to have two decimals
 	meanPrecipitation = math.Round(meanPrecipitation*100) / 100
 
 	return meanTemperature, meanPrecipitation

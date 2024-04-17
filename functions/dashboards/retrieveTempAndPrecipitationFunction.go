@@ -36,9 +36,6 @@ func RetrieveTempAndPrecipitation(latitude, longitude float64, id int, runTest b
 		return resources.HourlyData{}, fmt.Errorf("failed to decode JSON response: %s", err)
 	}
 
-	// DEBUGGING
-	log.Printf("Decoded API Response: %+v", forecastResponse)
-
 	// Check if any values were returned
 	if len(forecastResponse.Hourly.Temperature) == 0 &&
 		len(forecastResponse.Hourly.Precipitation) == 0 {

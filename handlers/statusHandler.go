@@ -11,7 +11,7 @@ import (
 
 var startTime = time.Now()
 
-// StatusHandler checks the status of endpoints
+// StatusHandler checks the HTTP status codes of endpoints
 func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	// Make sure only get method/request is allowed to the endpoint
 	if r.Method != http.MethodGet {
@@ -19,6 +19,7 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//client, ctx = dashboards.RecognizeEnvironmentVariableForClientContext(client, ctx)
 	//Make map to store status codes from rest API endpoints
 	status := make(map[string]int)
 
@@ -26,7 +27,8 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	status["countries_api"] = functions.CheckEndpointStatus(resources.REST_COUNTRIES_PATH + "/alpha/no/")
 	status["currency_api"] = functions.CheckEndpointStatus(resources.CURRENCY_PATH + "NOK/")
 	status["meteo_api"] = functions.CheckEndpointStatus(resources.OPEN_METEO_PATH)
-	status["notification_db"] = functions.CheckEndpointStatus(resources.NOTIFICATIONS_PATH)
+	status["notification_db"] = functions.CheckFirestoreStatus()
+	status["webhooks"] = functions.NumberOfRegisteredWebhooksGet()
 	// TODO: Add number of webhooks
 
 	//Calculate time since server started
@@ -34,12 +36,13 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	//Make instance of the response struct
 	statusResponse := resources.StatusResponse{
-		status["countries_api"],
-		status["meteo_api"],
-		status["currency_api"],
-		status["notification_db"],
-		"V1",
-		uptime,
+		CountriesApi:   status["countries_api"],
+		MeteoApi:       status["meteo_api"],
+		CurrencyApi:    status["currency_api"],
+		NotificationDB: status["notification_db"],
+		Webhooks:       status["webhooks"],
+		Version:        "V1",
+		Uptime:         uptime,
 	}
 
 	//Marshal the response to JSON

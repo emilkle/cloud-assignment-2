@@ -3,23 +3,23 @@ package handlers
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	"countries-dashboard-service/database"
-	"countries-dashboard-service/firestoreEmulator"
 	"countries-dashboard-service/functions/dashboards"
 	"countries-dashboard-service/resources"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 )
 
 var client *firestore.Client
 var ctx context.Context
 
-//var client = database.GetFirestoreClient()
-//var ctx = database.GetFirestoreContext()
+// SkipRealCallOfRetrieveDashboardGet is a flag variable used when testing the DashboardsHandler
+var SkipRealCallOfRetrieveDashboardGet bool
 
+// DashboardsHandler handles HTTP requests related to dashboards used in the countries dashboard service.
+// // It supports HTTP GET method.
 func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 	// Make sure only get method/request is allowed to the endpoint
 	if r.Method != http.MethodGet {
@@ -27,13 +27,10 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Checks if the handler makes request to production or emulated Firestore database
-	if os.Getenv("FIRESTORE_EMULATOR_HOST") == "8081" {
-		client = firestoreEmulator.GetEmulatorClient()
-		ctx = firestoreEmulator.GetEmulatorContext()
-	} else {
-		client = database.GetFirestoreClient()
-		ctx = database.GetFirestoreContext()
+	// Checks if the handler is supposed request to production or emulated Firestore database
+	// and set the client and context accordingly
+	if !SkipRealCallOfRetrieveDashboardGet {
+		client, ctx = dashboards.RecognizeEnvironmentVariableForClientContext(client, ctx)
 	}
 
 	// Extract id from url
@@ -48,7 +45,10 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve dashboard
-	dashboard, err := dashboards.RetrieveDashboardGet(client, ctx, IDs[0], false)
+	var dashboard resources.DashboardsGet
+	var err error
+
+	dashboard, err = helperFunctionForTesting(IDs)
 	if err != nil {
 		http.Error(w, "Dashboard not found", http.StatusNotFound)
 		return
@@ -72,5 +72,42 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error writing response", http.StatusInternalServerError)
 		log.Println("Error writing response", err)
 	}
-	WebhookTrigger(http.MethodGet, w, r)
+	if !SkipRealCallOfRetrieveDashboardGet {
+		WebhookTrigger(http.MethodGet, w, r)
+	}
+}
+
+// helperFunctionForTesting aids the testing of the DashboardsHandler, so that no external services are
+// interacted with during testing.
+func helperFunctionForTesting(IDs []string) (resources.DashboardsGet, error) {
+	var dashboard resources.DashboardsGet
+	var err error
+	if !SkipRealCallOfRetrieveDashboardGet {
+		dashboard, err = dashboards.RetrieveDashboardGet(client, ctx, IDs[0], false)
+	} else if IDs[0] == "1" {
+		dashboard = resources.DashboardsGet{
+			Country: "Norway",
+			IsoCode: "NO",
+			FeatureValues: resources.FeatureValues{
+				Temperature:   2.0,
+				Precipitation: 1.0,
+				Capital:       "Oslo",
+				Coordinates: resources.CoordinatesValues{
+					Latitude:  62.0,
+					Longitude: 10.0,
+				},
+				Population: 5379475,
+				Area:       385180.0,
+				TargetCurrencies: map[string]float64{
+					"EUR": 0.086312,
+					"USD": 0.998935,
+					"SEK": 0.091928,
+				},
+			},
+			LastRetrieval: "20240229 14:07",
+		}
+	} else {
+		err = errors.New("dashboard not found")
+	}
+	return dashboard, err
 }

@@ -25,8 +25,6 @@ func InitializeFirestoreEmulator() {
 	ctx = context.Background()
 	client, err = firestore.NewClient(ctx, "countries-dashboard-service",
 		option.WithEndpoint(os.Getenv("FIRESTORE_EMULATOR_HOST")), option.WithoutAuthentication())
-	//DEBUGGING
-	log.Println("DEBUGGING client 2: ", client)
 	if err != nil {
 		log.Fatalf("Failed to connect to Firestore emulator: %v", err)
 		return
