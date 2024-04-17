@@ -3,7 +3,7 @@ package handlers
 import (
 	"bytes"
 	"countries-dashboard-service/database"
-	"countries-dashboard-service/functions"
+	"countries-dashboard-service/functions/notifications"
 	"countries-dashboard-service/resources"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -47,10 +47,10 @@ func webhookRequestPOST(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate ID and assign it to webhook struct
-	id := functions.GenerateID()
+	id := notifications.GenerateID()
 	client := database.GetFirestoreClient()
 	ctx := database.GetFirestoreContext()
-	err = functions.AddWebhook(ctx, client, id, webhook)
+	err = notifications.AddWebhook(ctx, client, id, webhook)
 	if err != nil {
 		log.Println("handle the error", err)
 	}
@@ -83,7 +83,7 @@ func webhookRequestGET(w http.ResponseWriter, r *http.Request) {
 	// Check if the query does not contain an id.
 	if id == "" {
 		// Fetch all the documents in the  firestore database and handle the error that it returns.
-		webhookResponses, err1 := functions.GetAllWebhooks(ctx, client)
+		webhookResponses, err1 := notifications.GetAllWebhooks(ctx, client)
 		if err1 != nil {
 			http.Error(w, "Could not retrieve all documents.", http.StatusInternalServerError)
 			return
@@ -100,7 +100,7 @@ func webhookRequestGET(w http.ResponseWriter, r *http.Request) {
 
 	//var webhookResponses []resources.WebhookGET
 	//var notFoundIds []string
-	webhookResponse, err := functions.GetWebhook(ctx, client, id)
+	webhookResponse, err := notifications.GetWebhook(ctx, client, id)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -133,7 +133,7 @@ func webhookRequestDELETE(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := functions.DeleteWebhook(ctx, client, id)
+	response, err := notifications.DeleteWebhook(ctx, client, id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("Error deleting webhook: %v\n", err)
@@ -217,11 +217,12 @@ func WebhookTrigger(httpMethod string, w http.ResponseWriter, r *http.Request) {
 	client := database.GetFirestoreClient()
 
 	// Extract url from incoming HTTP request
-	urlFromRequest := r.URL.String()
-	urlFromRequest = "https://webhook.site/20d8180f-b4d4-479e-9aa6-32d970dd21ae" // Delete this line when done developing
+	endpointUrl := r.URL.String()
+	urlFromRequest := resources.ROOT_PATH + endpointUrl
+	//urlFromRequest = "https://webhook.site/20d8180f-b4d4-479e-9aa6-32d970dd21ae" // Delete this line when done developing
 
 	// Fetch all webhooks from database
-	var webhooks, err = functions.GetAllWebhooks(ctx, client)
+	var webhooks, err = notifications.GetAllWebhooks(ctx, client)
 	if err != nil {
 		log.Println("Error fetching all webhooks: ", err)
 		http.Error(w, "Error fetching webhooks", http.StatusInternalServerError)
