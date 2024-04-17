@@ -44,7 +44,7 @@ func GetDocumentID(ctx context.Context, client *firestore.Client,
 
 	// If no document found with requested ID, return an error.
 	if !found {
-		log.Println("The document with ID" + requestedId + " was not found.")
+		log.Println("The document with ID " + requestedId + " was not found.")
 		return "", errors.New("document not found")
 	}
 
@@ -60,7 +60,7 @@ func CreatePUTRequest(ctx context.Context, client *firestore.Client, w http.Resp
 	if err != nil {
 		log.Println("The document has incorrect datatypes:", err.Error())
 		http.Error(w, "The input datatypes or document structure is incorrect. Please use the following"+
-			"format to update a document: "+resources.JSON_STRUCT_POST_AND_PUT, http.StatusInternalServerError)
+			"format to update a document: "+resources.JSON_STRUCT_POST_AND_PUT, http.StatusForbidden)
 	} else {
 		putRegistration := map[string]interface{}{
 			"country": data.Country,
