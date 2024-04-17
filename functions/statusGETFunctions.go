@@ -10,8 +10,15 @@ import (
 	"time"
 )
 
-var client *firestore.Client
-var ctx context.Context
+var (
+	client *firestore.Client
+	ctx    context.Context
+
+	// Declare function variables
+	CheckEndpointStatusFunc           func(string) int                             = CheckEndpointStatus
+	NumberOfRegisteredWebhooksGetFunc func(*firestore.Client, context.Context) int = NumberOfRegisteredWebhooksGet
+	CheckFirestoreStatusFunc          func() int                                   = CheckFirestoreStatus
+)
 
 // CheckEndpointStatus checks and returns the status of an endpoint.
 // If the endpoint does not respond within 10 seconds it is timed out
@@ -35,9 +42,7 @@ func CheckEndpointStatus(url string) int {
 
 // NumberOfRegisteredWebhooksGet fetches all webhooks stored in the webhook collection in the database
 // and returns the number of webhooks
-func NumberOfRegisteredWebhooksGet() int {
-	client, ctx = dashboards.RecognizeEnvironmentVariableForClientContext(client, ctx)
-
+func NumberOfRegisteredWebhooksGet(client *firestore.Client, ctx context.Context) int {
 	collection := client.Collection(resources.WEBHOOK_COLLECTION)
 	webhooks, err := collection.Documents(ctx).GetAll()
 	if err != nil {

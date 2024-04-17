@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"countries-dashboard-service/functions"
+	"countries-dashboard-service/functions/dashboards"
 	"countries-dashboard-service/resources"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"time"
 )
@@ -19,20 +21,20 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//client, ctx = dashboards.RecognizeEnvironmentVariableForClientContext(client, ctx)
+	client, ctx = dashboards.RecognizeEnvironmentVariableForClientContext(client, ctx)
 	//Make map to store status codes from rest API endpoints
 	status := make(map[string]int)
 
 	//Add endpoints to the status-map
-	status["countries_api"] = functions.CheckEndpointStatus(resources.REST_COUNTRIES_PATH + "/alpha/no/")
-	status["currency_api"] = functions.CheckEndpointStatus(resources.CURRENCY_PATH + "NOK/")
-	status["meteo_api"] = functions.CheckEndpointStatus(resources.OPEN_METEO_PATH)
-	status["notification_db"] = functions.CheckFirestoreStatus()
-	status["webhooks"] = functions.NumberOfRegisteredWebhooksGet()
+	status["countries_api"] = functions.CheckEndpointStatusFunc(resources.REST_COUNTRIES_PATH + "/alpha/no/")
+	status["currency_api"] = functions.CheckEndpointStatusFunc(resources.CURRENCY_PATH + "NOK/")
+	status["meteo_api"] = functions.CheckEndpointStatusFunc(resources.OPEN_METEO_PATH)
+	status["notification_db"] = functions.CheckFirestoreStatusFunc()
+	status["webhooks"] = functions.NumberOfRegisteredWebhooksGetFunc(client, ctx)
 	// TODO: Add number of webhooks
 
 	//Calculate time since server started
-	uptime := time.Since(startTime).Seconds()
+	uptime := math.Round(time.Since(startTime).Seconds())
 
 	//Make instance of the response struct
 	statusResponse := resources.StatusResponse{
