@@ -258,10 +258,16 @@ func TestUpdatePOSTRequest(t *testing.T) {
 		},
 	}
 
-	newDocumentRef, _, err1 := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Add(emulatorCtx,
+	invalidJsonMarshal := make(chan bool)
+
+	invalidJsonUnmarshal := `{
+			'2222'
+		}`
+
+	newDocumentRef, _, err2 := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Add(emulatorCtx,
 		postRegistration)
-	if err1 != nil {
-		log.Println("An error occurred when creating a new document:", err1.Error())
+	if err2 != nil {
+		log.Println("An error occurred when creating a new document:", err2.Error())
 	}
 
 	postResponse := resources.RegistrationsPOSTResponse{
@@ -274,10 +280,22 @@ func TestUpdatePOSTRequest(t *testing.T) {
 	tests := []struct {
 		name         string
 		documentID   string
-		postResponse resources.RegistrationsPOSTResponse
+		postResponse any
 		expectedCode int
 	}{
 		// TODO: Add test cases.
+		{
+			name:         "The POST request body could not be marshaled",
+			documentID:   documentID,
+			postResponse: invalidJsonMarshal,
+			expectedCode: http.StatusInternalServerError,
+		},
+		{
+			name:         "The POST request body could not be unmarshaled",
+			documentID:   documentID,
+			postResponse: invalidJsonUnmarshal,
+			expectedCode: http.StatusInternalServerError,
+		},
 		{
 			name:         "The POST request body was successfully updated",
 			documentID:   documentID,
