@@ -3,14 +3,12 @@ package registrationsTests
 import (
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 var allRegistrations = []resources.RegistrationsGET{
@@ -170,72 +168,43 @@ func TestCreatePOSTRequest(t *testing.T) {
 }
 
 func TestCreatePOSTResponse(t *testing.T) {
-	expectedResponse := resources.RegistrationsPOSTResponse{
-		Id:         5,
-		LastChange: "20240229 14:07",
-	}
+	SetupFirestoreDatabase()
 
-	expectedJsonResponse, err := json.Marshal(expectedResponse)
+	emulatorDocs, err := registrations.GetAllRegisteredDocuments(emulatorCtx, emulatorClient)
 	if err != nil {
-		fmt.Println(resources.ENCODING_ERROR)
+		log.Println("Could not fetch all documents: ", err.Error())
 	}
 
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		nextId := len(allRegistrations) + 1
-		postResponse := resources.RegistrationsPOSTResponse{
-			Id:         nextId,
-			LastChange: "20240229 14:07",
-		}
-
-		jsonResponse, err1 := json.Marshal(postResponse)
-		if err1 != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonResponse)
-	}))
+	expectedResponse := resources.RegistrationsPOSTResponse{
+		Id:         len(emulatorDocs) + 1,
+		LastChange: time.Now().Format("20060102 15:04"),
+	}
 
 	tests := []struct {
-		name         string
-		method       string
-		expectedBody []byte
-		expectedCode int
+		name           string
+		expectedBody   resources.RegistrationsPOSTResponse
+		collectionName string
+		wantErr        error
+		invalidTest    bool
 	}{
 		// TODO: Add test cases.
 		{
-			name:         "The new registration has the next id in line",
-			method:       http.MethodPost,
-			expectedBody: expectedJsonResponse,
-			expectedCode: http.StatusOK,
+			name:           "The new registration has the next id in line",
+			expectedBody:   expectedResponse,
+			collectionName: resources.REGISTRATIONS_COLLECTION,
+			wantErr:        nil,
+			invalidTest:    false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err1 := http.NewRequest(tt.method, mockServer.URL, nil)
-			if err1 != nil {
-				t.Fatalf("failed to create request: %v", err1)
+			w := httptest.NewRecorder()
+			got, err1 := registrations.CreatePOSTResponse(emulatorCtx, emulatorClient, w)
+			if err1 != nil && err1.Error() != tt.wantErr.Error() {
+				t.Errorf("CreatePOSTResponse() error = %v, \n wantErr = %v", err1, tt.wantErr)
 			}
-
-			resp, err2 := http.DefaultClient.Do(req)
-			if err2 != nil {
-				t.Fatalf("failed to send request: %v", err2)
-			}
-			defer resp.Body.Close()
-
-			body, err3 := io.ReadAll(resp.Body)
-			if err3 != nil {
-				t.Fatalf("failed to read response body: %v", err3)
-			}
-
-			if string(body) != string(tt.expectedBody) {
-				t.Errorf("Expected response body %q but got %q.", tt.expectedBody, string(body))
-			}
-
-			if resp.StatusCode != tt.expectedCode {
-				t.Errorf("Expected status code %d but got %d.", tt.expectedCode, resp.StatusCode)
+			if got.Id != tt.expectedBody.Id {
+				t.Errorf("CreatePOSTResponse() got ID = %v, want ID = %v", got.Id, tt.expectedBody.Id)
 			}
 		})
 	}
