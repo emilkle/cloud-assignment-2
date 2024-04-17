@@ -40,8 +40,8 @@ func RegistrationsHandler(w http.ResponseWriter, r *http.Request) {
 // getting specific entries in specific orders, or by
 // using /dashboard/v1/registrations/ to get all documents.
 func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+	client = database.GetFirestoreClient()
+	ctx = database.GetFirestoreContext()
 
 	// Retrieve the 4th url-part that contains the id.
 	urlParts := strings.Split(r.URL.Path, "/")
@@ -94,8 +94,8 @@ func RegistrationRequestGET(w http.ResponseWriter, r *http.Request) {
 // It decodes the incoming request body into a Registration struct, creates a new document in the database,
 // and returns a response indicating success or failure.
 func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+	client = database.GetFirestoreClient()
+	ctx = database.GetFirestoreContext()
 
 	// Might use later for faster parsing of response body.
 	/*
@@ -144,8 +144,8 @@ func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 // It retrieves the document ID from the URL, decodes the incoming request body into a Registration struct,
 // updates the document in the database, and returns a response indicating success or failure.
 func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+	client = database.GetFirestoreClient()
+	ctx = database.GetFirestoreContext()
 
 	// Retrieve the 4th url-part that contains the id.
 	urlParts := strings.Split(r.URL.Path, "/")
@@ -191,8 +191,8 @@ func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 // It retrieves the document ID(s) from the URL, deletes the corresponding document(s) from the database,
 // and returns a response indicating success or failure.
 func RegistrationRequestDELETE(w http.ResponseWriter, r *http.Request) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+	client = database.GetFirestoreClient()
+	ctx = database.GetFirestoreContext()
 
 	// Retrieve the 4th url-part that contains the id.
 	urlParts := strings.Split(r.URL.Path, "/")

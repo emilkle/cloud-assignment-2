@@ -1,13 +1,16 @@
 package handlerTests
 
-/*
 import (
 	"bytes"
+	"countries-dashboard-service/firestoreEmulator"
 	"countries-dashboard-service/handlers"
 	"countries-dashboard-service/resources"
+	"countries-dashboard-service/tests/functionTests"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/api/iterator"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -45,7 +48,33 @@ var singleWebhook = `[
 	}
 ]`
 
+var emulatorClient = functionTests.GetEmulatorClient()
+var emulatorCtx = functionTests.GetEmulatorCtx()
+
 func Test_webhookTrigger(t *testing.T) {
+	firestoreEmulator.InitializeFirestoreEmulator()
+	firestoreEmulator.PopulateFirestoreWithWebhooks()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+
+	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+
+	for {
+		doc, err1 := iter.Next()
+		if err1 == iterator.Done {
+			break
+		}
+		if err1 != nil {
+			log.Fatalf("Failed to iterate over documents: %v", err1)
+			return
+		}
+		_, err1 = doc.Ref.Delete(emulatorCtx)
+		if err1 != nil {
+			log.Printf("Failed to delete document: %v", err1)
+		}
+	}
+	firestoreEmulator.PopulateFirestoreWithWebhooks()
+
 	type args struct {
 		httpMethod string
 		w          http.ResponseWriter
@@ -407,6 +436,3 @@ func Test_webhookRequestPOST(t *testing.T) {
 		})
 	}
 }
-
-
-*/

@@ -6,59 +6,101 @@ import (
 	"countries-dashboard-service/firestoreEmulator"
 	"countries-dashboard-service/functions"
 	"countries-dashboard-service/resources"
-	"net/http"
+	"countries-dashboard-service/tests/functionTests"
+	"google.golang.org/api/iterator"
+	"log"
 	"reflect"
 	"testing"
 )
 
+var emulatorClient = functionTests.GetEmulatorClient()
+var emulatorCtx = functionTests.GetEmulatorCtx()
+
 func TestAddWebhook(t *testing.T) {
-	firestoreEmulator.PopulateFirestoreData()
-	emulatorClient := firestoreEmulator.GetEmulatorClient()
-	emulatorCtx := firestoreEmulator.GetEmulatorContext()
+	firestoreEmulator.InitializeFirestoreEmulator()
+	firestoreEmulator.PopulateFirestoreWithWebhooks()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+
+	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+
+	for {
+		doc, err1 := iter.Next()
+		if err1 == iterator.Done {
+			break
+		}
+		if err1 != nil {
+			log.Fatalf("Failed to iterate over documents: %v", err1)
+			return
+		}
+		_, err1 = doc.Ref.Delete(emulatorCtx)
+		if err1 != nil {
+			log.Printf("Failed to delete document: %v", err1)
+		}
+	}
+	firestoreEmulator.PopulateFirestoreWithWebhooks()
 
 	tests := []struct {
-		name         string
-		idParam      string
-		expectedBody resources.WebhookPOST
-		wantErr      bool
+		name             string
+		idParam          string
+		inputBody        resources.WebhookPOST
+		expectedWebhook  *resources.WebhookGET
+		expectedResponse *resources.WebhookGET
 	}{
-		// TODO: Add test cases.
 		{
-			name:         "Create a single registration",
-			idParam:      "1",
-			expectedBody: resources.WebhookPOST{},
-			wantErr:      false,
-		},
-		{
-			name:         "Registration was not found",
-			idParam:      "3",
-			expectedBody: resources.WebhookPOST{},
-			wantErr:      true,
-		},
-		{
-			name:         "Invalid id string",
-			idParam:      "sdfsddfs",
-			expectedBody: resources.WebhookPOST{},
-			wantErr:      true,
+			name:    "Create a single registration",
+			idParam: "3",
+			inputBody: resources.WebhookPOST{
+				URL:     "URL3",
+				Country: "NO",
+				Event:   "POST",
+			},
+			expectedResponse: &resources.WebhookGET{
+				ID:      "3",
+				URL:     "URL3",
+				Country: "NO",
+				Event:   "POST",
+			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := functions.AddWebhook(emulatorCtx, emulatorClient, tt.idParam, tt.expectedBody)
-			/*if (err1 != nil) != tt.wantErr {
-				t.Errorf("Could not find the document with id: " + tt.idParam)
+			err := functions.AddWebhook(emulatorCtx, emulatorClient, tt.idParam, tt.inputBody)
+			if err != nil {
 				return
 			}
-
-			*/
-			if !reflect.DeepEqual(got, tt.expectedBody) {
-				t.Errorf("GetAllRegisteredDocuments() got = %v, expectedBody %v", got, tt.expectedBody)
+			expectedWebhook, err := functions.GetWebhook(emulatorCtx, emulatorClient, "3")
+			if !reflect.DeepEqual(expectedWebhook, tt.expectedResponse) {
+				t.Errorf("AddWebhook() got = %v, expectedBody %v", expectedWebhook, tt.expectedResponse)
 			}
 		})
 	}
 }
 
 func TestDeleteWebhook(t *testing.T) {
+	firestoreEmulator.InitializeFirestoreEmulator()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+
+	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+
+	for {
+		doc, err1 := iter.Next()
+		if err1 == iterator.Done {
+			break
+		}
+		if err1 != nil {
+			log.Fatalf("Failed to iterate over documents: %v", err1)
+			return
+		}
+		_, err1 = doc.Ref.Delete(emulatorCtx)
+		if err1 != nil {
+			log.Printf("Failed to delete document: %v", err1)
+		}
+	}
+	firestoreEmulator.PopulateFirestoreWithWebhooks()
+
 	type args struct {
 		ctx      context.Context
 		client   *firestore.Client
@@ -70,7 +112,17 @@ func TestDeleteWebhook(t *testing.T) {
 		want    *resources.WebhookPOSTResponse
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Successful deletion of webhook",
+			args: args{
+				ctx:      emulatorCtx,
+				client:   emulatorClient,
+				structID: "1",
+			},
+			want: &resources.WebhookPOSTResponse{
+				ID: "1",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -103,36 +155,94 @@ func TestGenerateID(t *testing.T) {
 	}
 }
 
+var allWebhhoksGET = []resources.WebhookGET{
+	{
+		ID:      "1",
+		URL:     "URL1",
+		Country: "NO",
+		Event:   "POST",
+	},
+	{
+		ID:      "2",
+		URL:     "URL2",
+		Country: "NO",
+		Event:   "POST",
+	},
+}
+
 func TestGetAllWebhooks(t *testing.T) {
-	type args struct {
-		ctx    context.Context
-		client *firestore.Client
-		w      http.ResponseWriter
-		data   resources.WebhookGET
+	firestoreEmulator.InitializeFirestoreEmulator()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+
+	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+
+	for {
+		doc, err1 := iter.Next()
+		if err1 == iterator.Done {
+			break
+		}
+		if err1 != nil {
+			log.Fatalf("Failed to iterate over documents: %v", err1)
+			return
+		}
+		_, err1 = doc.Ref.Delete(emulatorCtx)
+		if err1 != nil {
+			log.Printf("Failed to delete document: %v", err1)
+		}
 	}
+	firestoreEmulator.PopulateFirestoreWithWebhooks()
+
 	tests := []struct {
-		name    string
-		args    args
-		want    []resources.WebhookGET
-		wantErr bool
+		name         string
+		expectedBody []resources.WebhookGET
+		wantErr      bool
+		invalidTest  bool
 	}{
-		// TODO: Add test cases.
+		{
+			name:         "Get all documents",
+			expectedBody: allWebhhoksGET,
+			wantErr:      false,
+			invalidTest:  false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := functions.GetAllWebhooks(tt.args.ctx, tt.args.client)
+			got, err := functions.GetAllWebhooks(emulatorCtx, emulatorClient)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetAllWebhooks() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAllWebhooks() got = %v, want %v", got, tt.want)
+			if !reflect.DeepEqual(got, tt.expectedBody) {
+				t.Errorf("GetAllWebhooks() got = %v, want %v", got, tt.expectedBody)
 			}
 		})
 	}
 }
 
 func TestGetWebhook(t *testing.T) {
+	firestoreEmulator.InitializeFirestoreEmulator()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+
+	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+
+	for {
+		doc, err1 := iter.Next()
+		if err1 == iterator.Done {
+			break
+		}
+		if err1 != nil {
+			log.Fatalf("Failed to iterate over documents: %v", err1)
+			return
+		}
+		_, err1 = doc.Ref.Delete(emulatorCtx)
+		if err1 != nil {
+			log.Printf("Failed to delete document: %v", err1)
+		}
+	}
+	firestoreEmulator.PopulateFirestoreWithWebhooks()
+
 	type args struct {
 		ctx       context.Context
 		client    *firestore.Client
@@ -144,7 +254,21 @@ func TestGetWebhook(t *testing.T) {
 		want    *resources.WebhookGET
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Webhook get success",
+			args: args{
+				ctx:       emulatorCtx,
+				client:    emulatorClient,
+				webhookID: "1",
+			},
+			want: &resources.WebhookGET{
+				ID:      "1",
+				URL:     "URL1",
+				Country: "NO",
+				Event:   "POST",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

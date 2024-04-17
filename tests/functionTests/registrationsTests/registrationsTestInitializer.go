@@ -36,5 +36,5 @@ func SetupFirestoreDatabase() {
 		}
 	}
 
-	firestoreEmulator.PopulateFirestoreData()
+	firestoreEmulator.PopulateFirestoreWithRegistrations()
 }

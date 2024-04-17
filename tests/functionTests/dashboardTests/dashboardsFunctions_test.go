@@ -76,10 +76,9 @@ var testTargetCurrencyValues = resources.TargetCurrencyValues{
 // TestRetrieveDashboardData tests the RetrieveDashboardData function
 func TestRetrieveDashboardData(t *testing.T) {
 	firestoreEmulator.InitializeFirestoreEmulator()
-	firestoreEmulator.PopulateFirestoreData()
+	firestoreEmulator.PopulateFirestoreWithRegistrations()
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
 	emulatorCtx = firestoreEmulator.GetEmulatorContext()
-	//registrationsTests.SetupFirestoreDatabase()
 
 	type args struct {
 		dashboardId string
@@ -145,7 +144,7 @@ func gotDocumentData(docs []*firestore.DocumentSnapshot) []map[string]interface{
 
 func TestRetrieveDashboardGet(t *testing.T) {
 	firestoreEmulator.InitializeFirestoreEmulator()
-	firestoreEmulator.PopulateFirestoreData()
+	firestoreEmulator.PopulateFirestoreWithRegistrations()
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
 	emulatorCtx = firestoreEmulator.GetEmulatorContext()
 

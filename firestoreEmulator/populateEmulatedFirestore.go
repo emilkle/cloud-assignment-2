@@ -31,8 +31,8 @@ func InitializeFirestoreEmulator() {
 	}
 }
 
-// PopulateFirestoreData populates an emulated Firestore to be used for testing purposes
-func PopulateFirestoreData() {
+// PopulateFirestoreWithRegistrations populates an emulated Firestore to be used for testing purposes
+func PopulateFirestoreWithRegistrations() {
 	// Define registration data to be inserted in the emulated Firestore
 	registrations := []map[string]interface{}{
 		{
@@ -87,18 +87,21 @@ func PopulateFirestoreData() {
 	} else {
 		log.Println("There are already 2 documents in the collection. Skipping document addition.")
 	}
+}
 
+// PopulateFirestoreWithRegistrations populates an emulated Firestore to be used for testing purposes
+func PopulateFirestoreWithWebhooks() {
 	webhooks := []map[string]interface{}{
 		{
 			"ID":      "1",
-			"URL":     "webhooksite",
+			"URL":     "URL1",
 			"Country": "NO",
 			"Event":   "POST",
 		},
 		{
 			"ID":      "2",
-			"URL":     "webhooksite",
-			"Country": "EN",
+			"URL":     "URL2",
+			"Country": "NO",
 			"Event":   "POST",
 		},
 	}
@@ -123,18 +126,18 @@ func PopulateFirestoreData() {
 	} else {
 		log.Println("There are already 2 documents in the collection. Skipping document addition.")
 	}
-
 }
 
 // Server function to handle HTTP requests to populate Emulated Firestore
 func StartServer() {
 	http.HandleFunc("/populate", func(w http.ResponseWriter, r *http.Request) {
-		PopulateFirestoreData()
+		PopulateFirestoreWithRegistrations()
+		PopulateFirestoreWithWebhooks()
 		w.Write([]byte("Emulated Firestore populated successfully"))
 	})
 
-	log.Println("Server starting on :8082...")
-	log.Fatal(http.ListenAndServe(":8082", nil))
+	log.Println("Server starting on :8081...")
+	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
 // GetEmulatorClient() gets the firestore client
