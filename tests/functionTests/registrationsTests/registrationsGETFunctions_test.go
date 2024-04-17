@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"countries-dashboard-service/functions/registrations"
 	"countries-dashboard-service/resources"
+	"countries-dashboard-service/tests/functionTests"
 	"fmt"
 	"log"
 	"reflect"
@@ -124,7 +125,7 @@ var invalidDocument3 = map[string]interface{}{
 }
 
 func TestCreateRegistrationsGET(t *testing.T) {
-	SetupFirestoreDatabase()
+	functionTests.SetupFirestoreDatabase(resources.REGISTRATIONS_PATH)
 
 	tests := []struct {
 		name         string
@@ -167,7 +168,7 @@ func TestCreateRegistrationsGET(t *testing.T) {
 }
 
 func TestGetAllRegisteredDocuments(t *testing.T) {
-	SetupFirestoreDatabase()
+	functionTests.SetupFirestoreDatabase(resources.REGISTRATIONS_PATH)
 
 	tests := []struct {
 		name         string
@@ -302,7 +303,7 @@ func Test_CreateRegistrationsResponse(t *testing.T) {
 }
 
 func Test_UpdateId(t *testing.T) {
-	SetupFirestoreDatabase()
+	functionTests.SetupFirestoreDatabase(resources.REGISTRATIONS_PATH)
 	firstDocumentID := ""
 	docRef := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Limit(1)
 	docs, err := docRef.Documents(emulatorCtx).GetAll()
