@@ -245,9 +245,21 @@ func WebhookTrigger(httpMethod string, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	method := ""
+	switch httpMethod {
+	case http.MethodGet:
+		method = resources.EventInvoke
+	case http.MethodPut:
+		method = resources.EventChange
+	case http.MethodPost:
+		method = resources.EventRegister
+	case http.MethodDelete:
+		method = resources.EventDelete
+	}
+
 	// Invoke the matching webhook(s)
 	for _, webhook := range matchingWebhooks {
-		go CallUrl(webhook.URL, webhook.ID, webhook.URL, httpMethod, webhook.Country, w)
+		go CallUrl(webhook.URL, webhook.ID, webhook.URL, method, webhook.Country, w)
 	}
 
 }
