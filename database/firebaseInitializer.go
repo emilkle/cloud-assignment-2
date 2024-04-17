@@ -25,6 +25,8 @@ func InitializeFirestore() error {
 
 	// Check if the FIRESTORE_EMULATOR_HOST environment variable is set
 	if emulatorHost := os.Getenv("FIRESTORE_EMULATOR_HOST"); emulatorHost != "" {
+		//UNCOMMENT IF YOU WANT TO TEST USING THE EMULATED FIRESTORE
+		//firestoreEmulator.InitializeFirestoreEmulator()
 		// Point to the Firestore Emulator
 		conf := &firebase.Config{ProjectID: "countries-dashboard-service"}
 		opts := option.WithEndpoint("http://" + emulatorHost)

@@ -1,9 +1,14 @@
 package dashboards
 
 import (
+	"cloud.google.com/go/firestore"
+	"context"
+	"countries-dashboard-service/database"
+	"countries-dashboard-service/firestoreEmulator"
 	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 // HttpRequest performs an HTTP GET request to the specified URL
@@ -33,4 +38,16 @@ func ConstructUrlForApiOrTest(urlPath, testUrl string, runTest bool) string {
 		url = testUrl
 	}
 	return url
+}
+
+// RecognizeEnvironmentVariableForClientContext checks if the environment variable is set to use the Firestore emulator
+func RecognizeEnvironmentVariableForClientContext(client *firestore.Client, ctx context.Context) (*firestore.Client, context.Context) {
+	if os.Getenv("FIRESTORE_EMULATOR_HOST") == "8081" {
+		client = firestoreEmulator.GetEmulatorClient()
+		ctx = firestoreEmulator.GetEmulatorContext()
+	} else {
+		client = database.GetFirestoreClient()
+		ctx = database.GetFirestoreContext()
+	}
+	return client, ctx
 }
