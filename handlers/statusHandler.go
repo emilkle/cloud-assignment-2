@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-var startTime = time.Now()
+var StartTime = time.Now()
 
 // StatusHandler checks the HTTP status codes of endpoints
 func StatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +34,7 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Add number of webhooks
 
 	//Calculate time since server started
-	uptime := math.Round(time.Since(startTime).Seconds())
+	uptime := math.Round(time.Since(StartTime).Seconds())
 
 	//Make instance of the response struct
 	statusResponse := resources.StatusResponse{

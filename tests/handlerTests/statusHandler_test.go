@@ -1,10 +1,11 @@
-package handlers
+package handlerTests
 
 import (
 	"bytes"
 	"cloud.google.com/go/firestore"
 	"context"
 	"countries-dashboard-service/firestoreEmulator"
+	"countries-dashboard-service/handlers"
 	"encoding/json"
 	"math"
 	"net/http"
@@ -20,7 +21,7 @@ import (
 func TestStatusHandler(t *testing.T) {
 	firestoreEmulator.InitializeFirestoreEmulator()
 	firestoreEmulator.PopulateFirestoreWithRegistrations()
-	startTime = time.Now()
+	handlers.StartTime = time.Now()
 
 	// Mock functions used in the status handler
 	functions.CheckEndpointStatusFunc = func(url string) int {
@@ -59,7 +60,7 @@ func TestStatusHandler(t *testing.T) {
 			}
 
 			rr := httptest.NewRecorder()
-			handler := http.HandlerFunc(StatusHandler)
+			handler := http.HandlerFunc(handlers.StatusHandler)
 
 			handler.ServeHTTP(rr, req)
 
@@ -77,7 +78,7 @@ func TestStatusHandler(t *testing.T) {
 					NotificationDB: http.StatusOK,
 					Webhooks:       2,
 					Version:        "V1",
-					Uptime:         math.Round(time.Since(startTime).Seconds()),
+					Uptime:         math.Round(time.Since(handlers.StartTime).Seconds()),
 				})
 				if !bytes.Equal(rr.Body.Bytes(), expected) {
 					t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), string(expected))
