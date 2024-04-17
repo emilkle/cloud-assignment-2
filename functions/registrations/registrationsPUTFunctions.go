@@ -44,7 +44,7 @@ func GetDocumentID(ctx context.Context, client *firestore.Client,
 
 	// If no document found with requested ID, return an error.
 	if !found {
-		log.Println("The document with ID" + requestedId + " was not found.")
+		log.Println("The document with ID " + requestedId + " was not found.")
 		return "", errors.New("document not found")
 	}
 
