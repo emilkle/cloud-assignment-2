@@ -218,7 +218,7 @@ func WebhookTrigger(httpMethod string, w http.ResponseWriter, r *http.Request) {
 
 	// Extract url from incoming HTTP request
 	endpointUrl := r.URL.String()
-	urlFromRequest := resources.ROOT_PATH + endpointUrl
+	urlFromRequest := resources.RootPath + endpointUrl
 	//urlFromRequest = "https://webhook.site/20d8180f-b4d4-479e-9aa6-32d970dd21ae" // Delete this line when done developing
 
 	// Fetch all webhooks from database

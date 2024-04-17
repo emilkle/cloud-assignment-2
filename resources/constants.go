@@ -1,6 +1,6 @@
 package resources
 
-const ROOT_PATH = "http://localhost:8080"
+const RootPath = "http://localhost:8080"
 const DEFAULT_PORT = "8080"
 const REGISTRATIONS_PATH = "/dashboard/v1/registrations/"
 const DASHBOARDS_PATH = "/dashboard/v1/dashboards/"
