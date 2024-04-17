@@ -1,10 +1,10 @@
-package webhookTests
+package notificationTests
 
 import (
 	"cloud.google.com/go/firestore"
 	"context"
 	"countries-dashboard-service/firestoreEmulator"
-	"countries-dashboard-service/functions"
+	"countries-dashboard-service/functions/notifications"
 	"countries-dashboard-service/resources"
 	"countries-dashboard-service/tests/functionTests"
 	"google.golang.org/api/iterator"
@@ -66,11 +66,11 @@ func TestAddWebhook(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := functions.AddWebhook(emulatorCtx, emulatorClient, tt.idParam, tt.inputBody)
+			err := notifications.AddWebhook(emulatorCtx, emulatorClient, tt.idParam, tt.inputBody)
 			if err != nil {
 				return
 			}
-			expectedWebhook, err := functions.GetWebhook(emulatorCtx, emulatorClient, "3")
+			expectedWebhook, err := notifications.GetWebhook(emulatorCtx, emulatorClient, "3")
 			if !reflect.DeepEqual(expectedWebhook, tt.expectedResponse) {
 				t.Errorf("AddWebhook() got = %v, expectedBody %v", expectedWebhook, tt.expectedResponse)
 			}
@@ -126,7 +126,7 @@ func TestDeleteWebhook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := functions.DeleteWebhook(tt.args.ctx, tt.args.client, tt.args.structID)
+			got, err := notifications.DeleteWebhook(tt.args.ctx, tt.args.client, tt.args.structID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteWebhook() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -147,7 +147,7 @@ func TestGenerateID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := functions.GenerateID()
+			got := notifications.GenerateID()
 			if len(got) != tt.wantlength {
 				t.Errorf("GenerateID() length = %v, want %v", len(got), tt.wantlength)
 			}
@@ -208,7 +208,7 @@ func TestGetAllWebhooks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := functions.GetAllWebhooks(emulatorCtx, emulatorClient)
+			got, err := notifications.GetAllWebhooks(emulatorCtx, emulatorClient)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetAllWebhooks() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -272,7 +272,7 @@ func TestGetWebhook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := functions.GetWebhook(tt.args.ctx, tt.args.client, tt.args.webhookID)
+			got, err := notifications.GetWebhook(tt.args.ctx, tt.args.client, tt.args.webhookID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetWebhook() error = %v, wantErr %v", err, tt.wantErr)
 				return

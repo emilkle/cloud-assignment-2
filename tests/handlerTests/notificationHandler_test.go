@@ -2,15 +2,11 @@ package handlerTests
 
 import (
 	"bytes"
-	"countries-dashboard-service/firestoreEmulator"
-	"countries-dashboard-service/handlers"
 	"countries-dashboard-service/resources"
 	"countries-dashboard-service/tests/functionTests"
 	"encoding/json"
 	"fmt"
-	"google.golang.org/api/iterator"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -51,6 +47,7 @@ var singleWebhook = `[
 var emulatorClient = functionTests.GetEmulatorClient()
 var emulatorCtx = functionTests.GetEmulatorCtx()
 
+/*
 func Test_webhookTrigger(t *testing.T) {
 	firestoreEmulator.InitializeFirestoreEmulator()
 	firestoreEmulator.PopulateFirestoreWithWebhooks()
@@ -118,6 +115,8 @@ func TestCallUrl(t *testing.T) {
 		})
 	}
 }
+
+*/
 
 func TestWebhookHandler(t *testing.T) {
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,

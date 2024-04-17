@@ -1,4 +1,4 @@
-package functions
+package notifications
 
 import (
 	"cloud.google.com/go/firestore"
