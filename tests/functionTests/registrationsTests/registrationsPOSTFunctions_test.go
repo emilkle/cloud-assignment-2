@@ -296,7 +296,7 @@ func TestUpdatePOSTRequest(t *testing.T) {
 			w := httptest.NewRecorder()
 			registrations.UpdatePOSTRequest(emulatorCtx, emulatorClient, w, tt.documentID, tt.postResponse)
 			if w.Code != tt.expectedCode {
-				t.Errorf("Expected HTTP status code %d, but got %d", http.StatusInternalServerError, w.Code)
+				t.Errorf("Expected HTTP status code %d, but got %d", tt.expectedCode, w.Code)
 			}
 		})
 	}

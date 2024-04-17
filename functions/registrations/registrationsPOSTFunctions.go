@@ -108,7 +108,7 @@ func CreatePOSTRequest(ctx context.Context, client *firestore.Client, w http.Res
 	if err != nil {
 		log.Println("The document has incorrect datatypes:", err.Error())
 		http.Error(w, "The input datatypes or document structure is incorrect. Please use the following"+
-			"format to add a new document: "+resources.JSON_STRUCT_POST_AND_PUT, http.StatusInternalServerError)
+			"format to add a new document: "+resources.JSON_STRUCT_POST_AND_PUT, http.StatusForbidden)
 		return "", err
 	} else {
 
