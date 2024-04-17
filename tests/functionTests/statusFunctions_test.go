@@ -1,6 +1,7 @@
 package functionTests
 
 import (
+	"countries-dashboard-service/firestoreEmulator"
 	"countries-dashboard-service/functions"
 	"net/http"
 	"net/http/httptest"
@@ -55,6 +56,32 @@ func TestCheckEndpointStatus(t *testing.T) {
 
 			if !tt.shutdownServer {
 				server.Close()
+			}
+		})
+	}
+}
+
+// TestNumberOfRegisteredWebhooksGet Checks if the function retrieves the correct number of webhooks from firestore
+func TestNumberOfRegisteredWebhooksGet(t *testing.T) {
+	firestoreEmulator.InitializeFirestoreEmulator()
+	firestoreEmulator.PopulateFirestoreWithWebhooks()
+	emulatorClient = firestoreEmulator.GetEmulatorClient()
+	emulatorCtx = firestoreEmulator.GetEmulatorContext()
+
+	tests := []struct {
+		name string
+		want int
+	}{
+		{
+			name: "Retrieve Webhook Count",
+			want: 2,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := functions.NumberOfRegisteredWebhooksGet(emulatorClient, emulatorCtx); got != tt.want {
+				t.Errorf("NumberOfRegisteredWebhooksGet() = %v, want %v", got, tt.want)
 			}
 		})
 	}
