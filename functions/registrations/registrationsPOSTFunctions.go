@@ -30,60 +30,6 @@ func ValidateDataTypes(data resources.RegistrationsPOSTandPUT, w http.ResponseWr
 		return err
 	}
 
-	// Check if the 'temperature' field is a bool
-	if reflect.TypeOf(data.Features.Temperature) != reflect.TypeOf(true) {
-		err := errors.New("'temperature' field is not a boolean value")
-		log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
-		http.Error(w, "Please use a 'boolean' (true or false) as datatype for the temperature field.",
-			http.StatusForbidden)
-
-		return err
-	}
-
-	// Check if the 'precipitation' field is a bool
-	if reflect.TypeOf(data.Features.Precipitation) != reflect.TypeOf(true) {
-		err := errors.New("'precipitation' field is not a boolean value")
-		log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
-		http.Error(w, "Please use a 'boolean' (true or false) as datatype for the precipitation field.",
-			http.StatusForbidden)
-		return err
-	}
-
-	// Check if the 'capital' field is a bool
-	if reflect.TypeOf(data.Features.Capital) != reflect.TypeOf(true) {
-		err := errors.New("'capital' field is not a boolean value")
-		log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
-		http.Error(w, "Please use a 'boolean' (true or false) as datatype for the capital field.", http.StatusForbidden)
-		return err
-	}
-
-	// Check if the 'coordinates' field is a bool
-	if reflect.TypeOf(data.Features.Coordinates) != reflect.TypeOf(true) {
-		err := errors.New("'coordinates' field is not a boolean value")
-		log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
-		http.Error(w, "Please use a 'boolean' (true or false) as datatype for the coordinates field.",
-			http.StatusForbidden)
-		return err
-	}
-
-	// Check if the 'population' field is a bool
-	if reflect.TypeOf(data.Features.Population) != reflect.TypeOf(true) {
-		err := errors.New("'population' field is not a boolean value")
-		log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
-		http.Error(w, "Please use a 'boolean' (true or false) as datatype for the population field.",
-			http.StatusForbidden)
-		return err
-	}
-
-	// Check if the 'area' field is a bool
-	if reflect.TypeOf(data.Features.Area) != reflect.TypeOf(true) {
-		err := errors.New("'area' field is not a boolean value")
-		log.Println(resources.STANDARD_DATATYPE_ERROR, err.Error())
-		http.Error(w, "Please use a 'boolean' (true or false) as datatype for the area field.",
-			http.StatusForbidden)
-		return err
-	}
-
 	// Check if the 'targetCurrencies' field is a slice of strings
 	targetCurrencies := data.Features.TargetCurrencies
 	for _, tc := range targetCurrencies {
