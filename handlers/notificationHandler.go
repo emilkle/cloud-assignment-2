@@ -34,7 +34,7 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		webhookRequestDELETE(w, r)
 	default:
-		http.Error(w, "Method "+r.Method+" not supported for "+resources.NOTIFICATIONS_PATH, http.StatusMethodNotAllowed)
+		http.Error(w, "Method "+r.Method+" not supported for "+resources.NotificationsPath, http.StatusMethodNotAllowed)
 	}
 }
 
@@ -218,7 +218,7 @@ func WebhookTrigger(httpMethod string, w http.ResponseWriter, r *http.Request) {
 
 	// Extract url from incoming HTTP request
 	endpointUrl := r.URL.String()
-	urlFromRequest := resources.ROOT_PATH + endpointUrl
+	urlFromRequest := resources.RootPath + endpointUrl
 	//urlFromRequest = "https://webhook.site/20d8180f-b4d4-479e-9aa6-32d970dd21ae" // Delete this line when done developing
 
 	// Fetch all webhooks from database
@@ -245,9 +245,21 @@ func WebhookTrigger(httpMethod string, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	method := ""
+	switch httpMethod {
+	case http.MethodGet:
+		method = resources.EventInvoke
+	case http.MethodPut:
+		method = resources.EventChange
+	case http.MethodPost:
+		method = resources.EventRegister
+	case http.MethodDelete:
+		method = resources.EventDelete
+	}
+
 	// Invoke the matching webhook(s)
 	for _, webhook := range matchingWebhooks {
-		go CallUrl(webhook.URL, webhook.ID, webhook.URL, httpMethod, webhook.Country, w)
+		go CallUrl(webhook.URL, webhook.ID, webhook.URL, method, webhook.Country, w)
 	}
 
 }

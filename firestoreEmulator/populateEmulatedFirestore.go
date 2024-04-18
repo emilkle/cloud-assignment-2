@@ -68,7 +68,7 @@ func PopulateFirestoreWithRegistrations() {
 		// more registrations can be added if needed
 	}
 
-	docs, err2 := client.Collection(resources.REGISTRATIONS_COLLECTION).Documents(ctx).GetAll()
+	docs, err2 := client.Collection(resources.RegistrationsCollection).Documents(ctx).GetAll()
 	if err2 != nil {
 		log.Println("Failed to retrieve documents: ", err2.Error())
 		return
@@ -77,7 +77,7 @@ func PopulateFirestoreWithRegistrations() {
 	// Iterate over registrations and add them to Firestore
 	if len(docs) < 2 {
 		for _, reg := range registrations {
-			_, _, err3 := client.Collection(resources.REGISTRATIONS_COLLECTION).Add(ctx, reg)
+			_, _, err3 := client.Collection(resources.RegistrationsCollection).Add(ctx, reg)
 			if err3 != nil {
 				log.Printf("Failed to add registration: %v", err3)
 			} else {
@@ -107,7 +107,7 @@ func PopulateFirestoreWithWebhooks() {
 	}
 
 	//Iterate over webhooks and add them to firestore
-	webhookDocs, err4 := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx).GetAll()
+	webhookDocs, err4 := client.Collection(resources.WebhookCollection).Documents(ctx).GetAll()
 	if err4 != nil {
 		log.Println("Failed to retrieve documents: ", err4.Error())
 		return
@@ -116,7 +116,7 @@ func PopulateFirestoreWithWebhooks() {
 	// Iterate over webhooks and add them to Firestore
 	if len(webhookDocs) < 2 {
 		for _, reg := range webhooks {
-			_, _, err5 := client.Collection(resources.WEBHOOK_COLLECTION).Add(ctx, reg)
+			_, _, err5 := client.Collection(resources.WebhookCollection).Add(ctx, reg)
 			if err5 != nil {
 				log.Printf("Failed to add webhook: %v", err5)
 			} else {

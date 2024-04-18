@@ -191,7 +191,7 @@ func TestCreatePOSTResponse(t *testing.T) {
 		{
 			name:           "The new registration has the next id in line",
 			expectedBody:   expectedResponse,
-			collectionName: resources.REGISTRATIONS_COLLECTION,
+			collectionName: resources.RegistrationsCollection,
 			wantErr:        nil,
 			invalidTest:    false,
 		},
@@ -233,7 +233,7 @@ func TestUpdatePOSTRequest(t *testing.T) {
 			'2222'
 		}`
 
-	newDocumentRef, _, err2 := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Add(emulatorCtx,
+	newDocumentRef, _, err2 := emulatorClient.Collection(resources.RegistrationsCollection).Add(emulatorCtx,
 		postRegistration)
 	if err2 != nil {
 		log.Println("An error occurred when creating a new document:", err2.Error())

@@ -17,7 +17,7 @@ func RetrieveCoordinates(country string, id int, runTest bool) (resources.Coordi
 	fetching := "coordinates"
 
 	// Construct URL
-	var urlPath = fmt.Sprintf(resources.GEOCODING_METEO+"/search?name=%s&count=1&language=en&format=json", country)
+	var urlPath = fmt.Sprintf(resources.GeocodingMeteo+"/search?name=%s&count=1&language=en&format=json", country)
 	url := ConstructUrlForApiOrTest(urlPath, TestUrlRetrieveCoordinates, runTest)
 
 	// Make HTTP request to specified URL

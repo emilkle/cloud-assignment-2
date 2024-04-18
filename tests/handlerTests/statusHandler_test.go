@@ -25,9 +25,9 @@ func TestStatusHandler(t *testing.T) {
 
 	// Mock functions used in the status handler
 	functions.CheckEndpointStatusFunc = func(url string) int {
-		if url == resources.REST_COUNTRIES_PATH+"/alpha/no/" || url == resources.CURRENCY_PATH+"NOK/" {
+		if url == resources.RestCountriesPath+"/alpha/no/" || url == resources.CurrencyPath+"NOK/" {
 			return http.StatusOK
-		} else if url == resources.OPEN_METEO_PATH {
+		} else if url == resources.OpenMeteoPath {
 			return http.StatusOK
 		}
 		return http.StatusNotFound

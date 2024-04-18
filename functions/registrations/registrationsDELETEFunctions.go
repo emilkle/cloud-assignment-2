@@ -36,7 +36,7 @@ func DeleteDocumentWithRequestedId(ctx context.Context, client *firestore.Client
 // It returns true if the document is found and deleted successfully, false otherwise.
 func FindDocumentWithId(ctx context.Context, client *firestore.Client, documentId int) bool {
 	// Query Firestore for documents with matching ids.
-	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==",
+	iter := client.Collection(resources.RegistrationsCollection).Where("id", "==",
 		documentId).Documents(ctx)
 
 	for {
@@ -50,7 +50,7 @@ func FindDocumentWithId(ctx context.Context, client *firestore.Client, documentI
 		}
 
 		documentToDelete := document.Ref.ID
-		_, err2 := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentToDelete).Delete(ctx)
+		_, err2 := client.Collection(resources.RegistrationsCollection).Doc(documentToDelete).Delete(ctx)
 		if err2 != nil {
 			log.Println("An error occurred when deleting the given document. ", err2)
 			return false
