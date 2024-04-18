@@ -12,7 +12,7 @@ COPY ./resources /go/src/app/resources
 COPY ./tests /go/src/app/tests
 COPY ./go.mod /go/src/app/go.mod
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a ldflags '-extldglags "-static"' -o main
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o main
 
 EXPOSE 8080
 
