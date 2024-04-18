@@ -68,7 +68,7 @@ func TestDashboardsHandler(t *testing.T) {
 		method         string
 		path           string
 		expectedStatus int
-		expected       resources.DashboardsGet // Compare the actual structure
+		expected       resources.DashboardsGet
 	}{
 		{
 			name:           "GET Dashboard",
