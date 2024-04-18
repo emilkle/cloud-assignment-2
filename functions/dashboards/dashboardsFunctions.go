@@ -18,7 +18,7 @@ func RetrieveDashboardData(client *firestore.Client, ctx context.Context, dashbo
 		log.Printf("Failed to parse ID: %s. Error: %s", dashboardId, err)
 		return nil, 0, err
 	}
-	query := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==", idNumber).Limit(1)
+	query := client.Collection(resources.RegistrationsCollection).Where("id", "==", idNumber).Limit(1)
 	documents, err := query.Documents(ctx).GetAll()
 	if err != nil {
 		log.Printf("Failed to fetch documents. Error: %s", err)

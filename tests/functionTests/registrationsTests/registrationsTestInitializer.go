@@ -18,7 +18,7 @@ func SetupFirestoreDatabase() {
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
 	emulatorCtx = firestoreEmulator.GetEmulatorContext()
 
-	iter := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
+	iter := emulatorClient.Collection(resources.RegistrationsCollection).
 		OrderBy("lastChange", firestore.Asc).Documents(emulatorCtx)
 
 	for {

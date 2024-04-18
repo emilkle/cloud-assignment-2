@@ -83,14 +83,14 @@ func TestFindDocumentWithId(t *testing.T) {
 			var newDocumentRef *firestore.DocumentRef
 			var _ *firestore.WriteResult
 			var err1 error
-			docs, err2 := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Documents(emulatorCtx).GetAll()
+			docs, err2 := emulatorClient.Collection(resources.RegistrationsCollection).Documents(emulatorCtx).GetAll()
 			if err2 != nil {
 				log.Println("Failed to retrieve documents: ", err2.Error())
 				return
 			}
 
 			if len(docs) < 3 {
-				newDocumentRef, _, err1 = emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
+				newDocumentRef, _, err1 = emulatorClient.Collection(resources.RegistrationsCollection).
 					Add(emulatorCtx, invalidDocument3)
 				if err1 != nil {
 					log.Printf("An error occurred when creating a new document: %v", err1.Error())

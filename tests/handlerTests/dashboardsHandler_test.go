@@ -38,7 +38,7 @@ func TestDashboardsHandler(t *testing.T) {
 	handlers.SkipRealCallOfRetrieveDashboardGet = true
 
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := strings.TrimPrefix(r.URL.Path, resources.DASHBOARDS_PATH)
+		id := strings.TrimPrefix(r.URL.Path, resources.DashboardsPath)
 
 		w.Header().Set("Content-Type", "application/json")
 
@@ -73,26 +73,26 @@ func TestDashboardsHandler(t *testing.T) {
 		{
 			name:           "GET Dashboard",
 			method:         http.MethodGet,
-			path:           resources.DASHBOARDS_PATH + "1",
+			path:           resources.DashboardsPath + "1",
 			expectedStatus: http.StatusOK,
 			expected:       expectedDashboard,
 		},
 		{
 			name:           "Invalid Method",
 			method:         http.MethodPost,
-			path:           resources.DASHBOARDS_PATH + "1",
+			path:           resources.DashboardsPath + "1",
 			expectedStatus: http.StatusMethodNotAllowed,
 		},
 		{
 			name:           "Multiple IDs Error",
 			method:         http.MethodGet,
-			path:           resources.DASHBOARDS_PATH + "1,2",
+			path:           resources.DashboardsPath + "1,2",
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Dashboard Not Found",
 			method:         http.MethodGet,
-			path:           resources.DASHBOARDS_PATH + "999",
+			path:           resources.DashboardsPath + "999",
 			expectedStatus: http.StatusNotFound,
 		},
 	}

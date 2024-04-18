@@ -364,11 +364,105 @@ Dashboard not found.
 ```
 /dashboard/v1/notifications/
 ```
+### HTTP request POST
 Example requests:
 
+To add a new webhook, send a POST request to the notifications endpoint detailing URL, Country and Event 
+as described in example request body. A unique ID will be added upon storing in database and returned as a response.
+
+- http://localhost:8080/dashboard/v1/notifications/
+
+Request example body:
+```
+{
+    "URL": "http://localhost:8080/dashboard/v1/dashboards/1",
+    "Country": "NO",
+    "Event": "Invoke"
+}
+```
+Example response:
+```
+{
+    "ID": "02595fec-75ce-4dda-ac8d-2450ddcc6d1e"
+}
+```
+### HTTP request GET
+Example requests:
+
+To get all webhooks returned send GET request to URL: 
+
+- http://localhost:8080/dashboard/v1/notifications/
 
 Example response:
 ```
+[
+    {
+        "ID": "9189d595-b00e-49a5-b5f4-90a322ae68c9",
+        "URL": "https://webhook.site/20d8180f-b4d4-479e-9aa6-32d970dd21ae",
+        "Country": "SE",
+        "Event": "POST"
+    },
+    {
+        "ID": "02595fec-75ce-4dda-ac8d-2450ddcc6d1e",
+        "URL": "http://localhost:8080/dashboard/v1/dashboards/1",
+        "Country": "NO",
+        "Event": "Invoke"
+    }
+]
+```
+Example requests:
+
+To get a single webhook identified by a unique ID specify the ID sending a GET request to URL:
+
+- http://localhost:8080/dashboard/v1/notifications/9189d595-b00e-49a5-b5f4-90a322ae68c9
+
+Example response:
+```
+[
+    {
+        "ID": "9189d595-b00e-49a5-b5f4-90a322ae68c9",
+        "URL": "https://webhook.site/20d8180f-b4d4-479e-9aa6-32d970dd21ae",
+        "Country": "SE",
+        "Event": "POST"
+    }
+]
+```
+### HTTP request DELETE
+Example requests:
+
+To delete a webhook enter the webhook id of the corresponding webhook to be deleted as shown in the url below.
+Id of deleted webhook is returned as a response.
+
+- http://localhost:8080/dashboard/v1/notifications/02595fec-75ce-4dda-ac8d-2450ddcc6d1e
+
+Example response:
+```
+{
+    "ID": "02595fec-75ce-4dda-ac8d-2450ddcc6d1e"
+}
+The requested webhook were successfully deleted from the database.
+```
+### Invoke HTTP request POST
+
+Registered webhooks are invoked if they have the same url as the methods invoking the following events:
+
+
+REGISTER - webhook is invoked if a new configuration is registered
+
+CHANGE - webhook is invoked if configuration is modified
+
+DELETE - webhook is invoked if configuration is deleted
+
+INVOKE - webhook is invoked if dashboard is retrieved (i.e., populated with values)
+
+Example response:
+```
+{
+  "Country": "EN",
+  "Event": "GET",
+  "ID": "b3fadc89-90e1-49c3-8098-99e67fd04d50",
+  "time": "2024-04-16T22:06:35+02:00"
+}
 
 ```
 
