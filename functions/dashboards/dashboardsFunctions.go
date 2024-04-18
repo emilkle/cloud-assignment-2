@@ -36,7 +36,7 @@ func RetrieveDashboardGet(client *firestore.Client, ctx context.Context, dashboa
 
 	// Check if documents contain documents
 	if len(documents) == 0 {
-		err := fmt.Errorf("no document found with ID: %s", dashboardId)
+		err = fmt.Errorf("no document found with ID: %s", dashboardId)
 		log.Println(err)
 		return resources.DashboardsGet{}, err
 	}
@@ -45,7 +45,6 @@ func RetrieveDashboardGet(client *firestore.Client, ctx context.Context, dashboa
 	data := documents[0].Data()
 	featuresData, ok := data["features"].(map[string]interface{})
 	if !ok {
-		// Handle the error or continue with a default value
 		log.Println("Error: 'features' is not a valid map[string]interface{}")
 		return resources.DashboardsGet{}, fmt.Errorf("'features' field is missing or not the expected type")
 	}
