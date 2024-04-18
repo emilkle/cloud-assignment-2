@@ -304,12 +304,59 @@ Example response:
 ```
 /dashboard/v1/dashboards/
 ```
+### HTTP request Dashboard
 Example requests:
-
+* Return a populated Dashboard based on a specific registration configuration with a specific "id" field:
+  * /dashboard/v1/dashboards/1
 
 Example response:
 ```
+{
+    "country": "Norway",
+    "isoCode": "NO",
+    "features": {
+        "temperature": -2.4,
+        "precipitation": 0,
+        "capital": "Oslo",
+        "coordinates": {
+            "latitude": 62,
+            "longitude": 10
+        },
+        "population": 5379475,
+        "area": 0,
+        "target_currencies": {
+            "EUR": 0.085719,
+            "SEK": 0.99713,
+            "USD": 0.091073
+        }
+    },
+    "last_retrieval": "20240418 10:04"
+}
+```
 
+* No "id" specified:
+ * /dashboard/v1/dashboards/
+
+Example response:
+```
+Cannot retrieve dashboard because no ID was specified.
+```
+
+* More than one "id" specified:
+ * /dashboard/v1/dashboards/1,2
+
+Example response:
+```
+Cannot retrieve more than one dashboard, too many IDs specified.
+```
+
+* Non existing "id" specified:
+ * /dashboard/v1/dashboards/999
+ * /dashboard/v1/dashboards/abc
+
+Example response:
+```
+Dashboard not found.
 ```
 
 
@@ -329,13 +376,96 @@ Example response:
 ```
 /dashboard/v1/status/
 ```
+### HTTP request Dashboard
+Example requests:
+* Return HTTP status codes of Rest APIs used by the service, notoifications database, version and uptime of the service:
+  * /dashboard/v1/status
 Example response:
 ```
-
+{
+    "countries_api": 200,
+    "meteo_api": 200,
+    "currency_api": 200,
+    "notification_db": 200,
+    "webhooks": 7,
+    "version": "V1",
+    "uptime": 686
+}
 ```
 
 ## Support
 Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+
+## Testing of the Countries Dashboard Service
+
+In order to run tests for the Countries Dashboard Service, a locally emulated Firestore database needs to be configured and running on your computer.
+
+### Setting up emulated Firestore database (Windows)
+
+1. **Install Node.js**:
+   Node.js is a runtime environment that lets you run JavaScript outside the browser. It includes npm (Node Package Manager) for managing dependencies.
+   - Download Node.js (LTS) from [Node.js official site](https://nodejs.org/en).
+
+2. **Install Java**:
+   Java is required to run the Firestore Emulator.
+   - Download JAVA JDK (LTS) from [Oracle Java download page](https://www.oracle.com/java/technologies/downloads/#java11).
+
+3. **Configure Java Environment Variables**:
+   - Open System Properties (System > Advanced System Settings > Environment Variables).
+   - Under "System variables", click "New":
+     - Variable name: `JAVA_HOME`
+     - Variable value: path to your Java installation directory, e.g., `C:\Program Files\Java\jdk-<version>`
+   - Update the System Path:
+     - In "Environment Variables", under "System variables", find and edit "Path".
+     - Add a new entry: `%JAVA_HOME%\bin`.
+   - Restart your computer and verify the Java installation in the Terminal:
+     - Run `java -version` and `javac -version` to confirm the installation and version.
+
+4. **Install Firebase CLI**:
+   - Open a terminal and install Firebase CLI using npm:
+     ```bash
+     npm install -g firebase-tools
+     ```
+
+5. **Set Firestore Emulator Environment Variable**:
+   - In PowerShell, set the environment variable to "8081":
+     ```powershell
+     $env:FIRESTORE_EMULATOR_HOST="8081"
+     ```
+   - Verify the setting:
+     ```powershell
+     echo $env:FIRESTORE_EMULATOR_HOST
+     ```
+     The response should be "8081".
+
+6. **Start the Emulated Firestore**:
+   - Navigate to your project directory where the emulator setup files are located:
+     ```bash
+     cd path\to\your\project\countries-dashboard-service\firestoreEmulator\emulatorFiles
+     ```
+   - Start the emulator:
+     ```bash
+     firebase emulators:start --only firestore --project countries-dashboard-service
+     ```
+   - Access the Web UI via the link provided in the terminal output.
+
+7. **Verify Emulator Setup**:
+   - Follow the link from the terminal to ensure the Firestore emulator is running correctly.
+
+8. **Configure Application to Use Emulated Firestore**:
+   - Ensure the application is configured to use the `FIRESTORE_EMULATOR_HOST` environment variable set to `127.0.0.1:8081`.
+
+9. **Run the Application**:
+   - Use the configured run setup to start the application.
+
+10. **Populate the Emulated Firestore**:
+    - Visit `http://localhost:8082/populate` to populate the emulator with sample data.
+
+11. **Check Emulated Firestore Data**:
+    - Access the Firebase Emulator Suite at `http://127.0.0.1:4000/firestore/data` to verify the data.
+
+12. **Testing with Emulated Firestore**:
+    - With the emulator running, you can now run tests to verify functionality without affecting the production database.
 
 ## Roadmap
 If you have ideas for releases in the future, it is a good idea to list them in the README.
