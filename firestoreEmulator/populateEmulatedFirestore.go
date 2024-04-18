@@ -89,7 +89,7 @@ func PopulateFirestoreWithRegistrations() {
 	}
 }
 
-// PopulateFirestoreWithRegistrations populates an emulated Firestore to be used for testing purposes
+// PopulateFirestoreWithWebhooks populates an emulated Firestore to be used for testing purposes
 func PopulateFirestoreWithWebhooks() {
 	webhooks := []map[string]interface{}{
 		{
@@ -128,7 +128,7 @@ func PopulateFirestoreWithWebhooks() {
 	}
 }
 
-// Server function to handle HTTP requests to populate Emulated Firestore
+// StartServer Server function to handle HTTP requests to populate Emulated Firestore
 func StartServer() {
 	http.HandleFunc("/populate", func(w http.ResponseWriter, r *http.Request) {
 		PopulateFirestoreWithRegistrations()
@@ -140,12 +140,12 @@ func StartServer() {
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
-// GetEmulatorClient() gets the firestore client
+// GetEmulatorClient gets the firestore client
 func GetEmulatorClient() *firestore.Client {
 	return client
 }
 
-// GetEmulatorContext() gets the firestore context
+// GetEmulatorContext gets the firestore context
 func GetEmulatorContext() context.Context {
 	return ctx
 }

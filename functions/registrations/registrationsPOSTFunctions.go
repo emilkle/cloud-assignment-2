@@ -109,16 +109,16 @@ func CreatePOSTResponse(ctx context.Context, client *firestore.Client, w http.Re
 
 // UpdatePOSTRequest updates the newly created registration document with its ID and last change timestamp.
 func UpdatePOSTRequest(ctx context.Context, client *firestore.Client, w http.ResponseWriter,
-	documentID string, postResponse resources.RegistrationsPOSTResponse) {
+	documentID string, postResponse any) {
 	postResponseMap := make(map[string]interface{})
-	jsonString, err1 := json.Marshal(&postResponse)
+	jsonBytes, err1 := json.Marshal(&postResponse)
 	if err1 != nil {
 		log.Println("Unable to marshal the POST response: ", err1.Error())
 		http.Error(w, resources.ENCODING_ERROR+"of the POST response data.", http.StatusInternalServerError)
 		return
 	}
 
-	err2 := json.Unmarshal(jsonString, &postResponseMap)
+	err2 := json.Unmarshal(jsonBytes, &postResponseMap)
 	if err2 != nil {
 		log.Println("Unable to unmarshal the POST response: ", err2.Error())
 		http.Error(w, resources.DECODING_ERROR+"of the POST response data.", http.StatusInternalServerError)

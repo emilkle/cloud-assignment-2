@@ -182,7 +182,7 @@ func CallUrl(url string, id string, content string, event, country string, w io.
 	mac := hmac.New(sha256.New, Secret)
 	_, err = mac.Write([]byte(content))
 	if err != nil {
-		log.Printf("%v", "Error during content hashing. Error:", err)
+		log.Printf("Error during content hashing. Error: %v", err)
 		return
 	}
 	// Convert hash to string & add to header to transport to client for validation

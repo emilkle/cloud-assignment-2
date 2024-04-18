@@ -12,7 +12,7 @@ import (
 // TestRetrieveCurrencyExchangeRates tests the RetrieveCurrencyExchangeRates function without making a real HTTP request to a rest API.
 func TestRetrieveCurrencyExchangeRates(t *testing.T) {
 	// Create a local test server to simulate a successful HTTP response i.e. the mockJSONResponse.
-	// A HTTP request will respond the mockJSONResponse
+	// an HTTP request will respond the mockJSONResponse
 	tsSuccess := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mockJSONResponse := `{
 			"rates": {

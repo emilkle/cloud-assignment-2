@@ -12,7 +12,7 @@ import (
 // TestRetrieveCapitalPopulationAndArea tests the RetrieveCapitalPopulationAndArea function without making a real HTTP request to a rest API.
 func TestRetrieveCapitalPopulationAndArea(t *testing.T) {
 	// Create a local test server to simulate a successful HTTP response i.e. the mockJSONResponse.
-	// A HTTP request will respond the mockJSONResponse
+	// an HTTP request will respond the mockJSONResponse
 	tsResponse := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mockJSONResponse := `[{
 			"capital": ["Test Capital"],

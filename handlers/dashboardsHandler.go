@@ -19,7 +19,7 @@ var ctx context.Context
 var SkipRealCallOfRetrieveDashboardGet bool
 
 // DashboardsHandler handles HTTP requests related to dashboards used in the countries dashboard service.
-// // It supports HTTP GET method.
+// It supports HTTP GET method.
 func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 	// Make sure only get method/request is allowed to the endpoint
 	if r.Method != http.MethodGet {
