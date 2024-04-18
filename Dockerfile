@@ -1,0 +1,19 @@
+FROM golang:1.18
+
+LABEL authors="Marius Robsham Dahl, Kristian Welle Glomset, Emil Klevgård-Slåttsveen"
+
+WORKDIR /go/src/app
+
+COPY ./database /go/src/app/database
+COPY ./firestoreEmulator /go/src/app/firestoreEmulator
+COPY ./functions /go/src/app/functions
+COPY ./handlers /go/src/app/handlers
+COPY ./resources /go/src/app/resources
+COPY ./tests /go/src/app/tests
+COPY ./go.mod /go/src/app/go.mod
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a ldflags '-extldglags "-static"' -o server
+
+EXPOSE 8080
+
+CMD ["./server"]
