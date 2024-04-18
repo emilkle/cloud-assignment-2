@@ -71,6 +71,7 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 	// Write response
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(jsonDashboardResponse)
+
 	if err != nil {
 		http.Error(w, "Error writing response", http.StatusInternalServerError)
 		log.Println("Error writing response", err)

@@ -28,7 +28,6 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		webhookRequestPOST(w, r)
-		//webhookTrigger(w, r)
 	case http.MethodGet:
 		webhookRequestGET(w, r)
 	case http.MethodDelete:
@@ -48,8 +47,8 @@ func webhookRequestPOST(w http.ResponseWriter, r *http.Request) {
 
 	// Generate ID and assign it to webhook struct
 	id := notifications.GenerateID()
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+	client = database.GetFirestoreClient()
+	ctx = database.GetFirestoreContext()
 	err = notifications.AddWebhook(ctx, client, id, webhook)
 	if err != nil {
 		log.Println("handle the error", err)
@@ -73,8 +72,8 @@ func webhookRequestPOST(w http.ResponseWriter, r *http.Request) {
 // It is possible to get all documents at once by calling /dashboard/v1/notifications/ .
 // For getting specific entries /dashboard/v1/registrations/{id} is used.
 func webhookRequestGET(w http.ResponseWriter, r *http.Request) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+	client = database.GetFirestoreClient()
+	ctx = database.GetFirestoreContext()
 
 	// Retrieve the 4th url-part that contains the id.
 	urlParts := strings.Split(r.URL.Path, "/")
@@ -98,8 +97,6 @@ func webhookRequestGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//var webhookResponses []resources.WebhookGET
-	//var notFoundIds []string
 	webhookResponse, err := notifications.GetWebhook(ctx, client, id)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -118,8 +115,8 @@ func webhookRequestGET(w http.ResponseWriter, r *http.Request) {
 // It retrieves the webhook id from the URL, deletes the corresponding document from the database,
 // and returns a response indicating success or failure.
 func webhookRequestDELETE(w http.ResponseWriter, r *http.Request) {
-	client := database.GetFirestoreClient()
-	ctx := database.GetFirestoreContext()
+	client = database.GetFirestoreClient()
+	ctx = database.GetFirestoreContext()
 
 	// Retrieve the 4th url-part that contains the id.
 	urlParts := strings.Split(r.URL.Path, "/")
@@ -191,8 +188,8 @@ func CallUrl(url string, id string, content string, event, country string, w io.
 	/// END: CONTENT-BASED VALIDATION
 
 	// Perform invocation
-	client := http.Client{}
-	res, err := client.Do(req)
+	invocationClient := http.Client{}
+	res, err := invocationClient.Do(req)
 	if err != nil {
 		log.Println("Error in HTTP request. Error:", err)
 		return
@@ -213,13 +210,13 @@ func CallUrl(url string, id string, content string, event, country string, w io.
 // It fetches all registered webhooks from the database, identifies the ones with matching URLs, and triggers them asynchronously.
 func WebhookTrigger(httpMethod string, w http.ResponseWriter, r *http.Request) {
 	// Establish firestore context and client
-	ctx := database.GetFirestoreContext()
-	client := database.GetFirestoreClient()
+	ctx = database.GetFirestoreContext()
+	client = database.GetFirestoreClient()
 
 	// Extract url from incoming HTTP request
 	endpointUrl := r.URL.String()
 	urlFromRequest := resources.RootPath + endpointUrl
-	//urlFromRequest = "https://webhook.site/20d8180f-b4d4-479e-9aa6-32d970dd21ae" // Delete this line when done developing
+	//urlFromRequest = "https://webhook.site/20d8180f-b4d4-479e-9aa6-32d970dd21ae" // For testing purposes only
 
 	// Fetch all webhooks from database
 	var webhooks, err = notifications.GetAllWebhooks(ctx, client)
@@ -232,7 +229,7 @@ func WebhookTrigger(httpMethod string, w http.ResponseWriter, r *http.Request) {
 	// Filter webhooks to find the ones with matching urls
 	var matchingWebhooks []*resources.WebhookGET
 	for _, v := range webhooks {
-		if v.URL == urlFromRequest {
+		if v.URL == urlFromRequest && v.Event == httpMethod {
 			webhookCopy := v
 			matchingWebhooks = append(matchingWebhooks, &webhookCopy)
 		}
