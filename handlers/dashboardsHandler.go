@@ -42,6 +42,9 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 	if len(IDs) != 1 {
 		http.Error(w, "Cannot retrieve more than one dashboard, too many IDs specified.", http.StatusBadRequest)
 		return
+	} else if id == "" {
+		http.Error(w, "Cannot retrieve dashboard because no ID was specified.", http.StatusBadRequest)
+		return
 	}
 
 	// Retrieve dashboard
@@ -50,7 +53,7 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 
 	dashboard, err = helperFunctionForTesting(IDs)
 	if err != nil {
-		http.Error(w, "Dashboard not found", http.StatusNotFound)
+		http.Error(w, "Dashboard not found.", http.StatusNotFound)
 		return
 	}
 
