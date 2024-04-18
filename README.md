@@ -304,12 +304,59 @@ Example response:
 ```
 /dashboard/v1/dashboards/
 ```
+### HTTP request Dashboard
 Example requests:
-
+* Return a populated Dashboard based on a specific registration configuration with a specific "id" field:
+  * /dashboard/v1/dashboards/1
 
 Example response:
 ```
+{
+    "country": "Norway",
+    "isoCode": "NO",
+    "features": {
+        "temperature": -2.4,
+        "precipitation": 0,
+        "capital": "Oslo",
+        "coordinates": {
+            "latitude": 62,
+            "longitude": 10
+        },
+        "population": 5379475,
+        "area": 0,
+        "target_currencies": {
+            "EUR": 0.085719,
+            "SEK": 0.99713,
+            "USD": 0.091073
+        }
+    },
+    "last_retrieval": "20240418 10:04"
+}
+```
 
+* No "id" specified:
+ * /dashboard/v1/dashboards/
+
+Example response:
+```
+Cannot retrieve dashboard because no ID was specified.
+```
+
+* More than one "id" specified:
+ * /dashboard/v1/dashboards/1,2
+
+Example response:
+```
+Cannot retrieve more than one dashboard, too many IDs specified.
+```
+
+* Non existing "id" specified:
+ * /dashboard/v1/dashboards/999
+ * /dashboard/v1/dashboards/abc
+
+Example response:
+```
+Dashboard not found.
 ```
 
 
