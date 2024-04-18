@@ -16,7 +16,7 @@ func RetrieveTempAndPrecipitation(latitude, longitude float64, id int, runTest b
 	fetching := "temp and precipitation"
 
 	// Construct URL
-	var urlPath = fmt.Sprintf(resources.METEO_TEMP_PERCIP+"/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
+	var urlPath = fmt.Sprintf(resources.MeteoTempPercip+"/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,precipitation&forecast_days=1", latitude, longitude)
 	url := ConstructUrlForApiOrTest(urlPath, TestUrlRetrieveTempAndPrecipitation, runTest)
 
 	// Make HTTP request to specified URL

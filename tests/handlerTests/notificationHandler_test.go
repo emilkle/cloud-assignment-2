@@ -211,19 +211,19 @@ func Test_webhookRequestDELETE(t *testing.T) {
 		{
 			name:         "Delete webhook",
 			method:       http.MethodDelete,
-			path:         resources.REGISTRATIONS_PATH + "3",
+			path:         resources.RegistrationsPath + "3",
 			expectedCode: http.StatusNoContent,
 		},
 		{
 			name:         "Trying to delete an registration that is not registered",
 			method:       http.MethodDelete,
-			path:         resources.REGISTRATIONS_PATH + "6",
+			path:         resources.RegistrationsPath + "6",
 			expectedCode: http.StatusNotFound,
 		},
 		{
 			name:         "No id given",
 			method:       http.MethodDelete,
-			path:         resources.REGISTRATIONS_PATH + "",
+			path:         resources.RegistrationsPath + "",
 			expectedCode: http.StatusBadRequest,
 		},
 	}
@@ -284,21 +284,21 @@ func Test_webhookRequestGET(t *testing.T) {
 		{
 			name:         "Get all webhooks",
 			method:       http.MethodGet,
-			path:         resources.REGISTRATIONS_PATH,
+			path:         resources.RegistrationsPath,
 			expectedBody: allWebhooks,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "Get webhook",
 			method:       http.MethodGet,
-			path:         resources.REGISTRATIONS_PATH + "3",
+			path:         resources.RegistrationsPath + "3",
 			expectedBody: singleWebhook,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "Get invalid registration",
 			method:       http.MethodGet,
-			path:         resources.REGISTRATIONS_PATH + "5",
+			path:         resources.RegistrationsPath + "5",
 			expectedBody: "",
 			expectedCode: http.StatusNotFound,
 		},
@@ -370,8 +370,8 @@ func Test_webhookRequestPOST(t *testing.T) {
 		var receivedPostRequestBody map[string]interface{}
 		if err := json.NewDecoder(r.Body).Decode(&receivedPostRequestBody); err != nil {
 			w.WriteHeader(http.StatusForbidden)
-			t.Fatalf(fmt.Sprintf(resources.DECODING_ERROR+"of the POST request. Use this structure for your"+
-				" POST request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT))
+			t.Fatalf(fmt.Sprintf(resources.DecodingError+"of the POST request. Use this structure for your"+
+				" POST request instead: \n%s", resources.JsonStructPostAndPut))
 		}
 
 		if reflect.DeepEqual(receivedPostRequestBody, postRequestBody) {
@@ -396,7 +396,7 @@ func Test_webhookRequestPOST(t *testing.T) {
 		{
 			name:         "Add a new webhook",
 			method:       http.MethodPost,
-			path:         resources.NOTIFICATIONS_PATH,
+			path:         resources.NotificationsPath,
 			payload:      postRequestBodyBytes,
 			expectedBody: postResponseBody,
 			expectedCode: http.StatusCreated,
@@ -404,7 +404,7 @@ func Test_webhookRequestPOST(t *testing.T) {
 		{
 			name:         "Wrong request format",
 			method:       http.MethodPost,
-			path:         resources.NOTIFICATIONS_PATH,
+			path:         resources.NotificationsPath,
 			payload:      invalidRequestBodyBytes,
 			expectedBody: invalidResponse,
 			expectedCode: http.StatusForbidden},

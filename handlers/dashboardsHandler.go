@@ -61,7 +61,7 @@ func DashboardsHandler(w http.ResponseWriter, r *http.Request) {
 	jsonDashboardResponse, err := json.Marshal(dashboard)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		log.Println(resources.ENCODING_ERROR, err)
+		log.Println(resources.EncodingError, err)
 		return
 	}
 

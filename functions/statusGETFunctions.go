@@ -43,7 +43,7 @@ func CheckEndpointStatus(url string) int {
 // NumberOfRegisteredWebhooksGet fetches all webhooks stored in the webhook collection in the database
 // and returns the number of webhooks
 func NumberOfRegisteredWebhooksGet(client *firestore.Client, ctx context.Context) int {
-	collection := client.Collection(resources.WEBHOOK_COLLECTION)
+	collection := client.Collection(resources.WebhookCollection)
 	webhooks, err := collection.Documents(ctx).GetAll()
 	if err != nil {
 		fmt.Printf("Failed to get all webhooks: %v", err)
@@ -54,7 +54,7 @@ func NumberOfRegisteredWebhooksGet(client *firestore.Client, ctx context.Context
 // CheckFirestoreStatus returns an HTTP status code that simulates the Firestore database's status.
 func CheckFirestoreStatus() int {
 	client, ctx = dashboards.RecognizeEnvironmentVariableForClientContext(client, ctx)
-	collection := client.Collection(resources.WEBHOOK_COLLECTION)
+	collection := client.Collection(resources.WebhookCollection)
 	_, err := collection.Limit(1).Documents(ctx).GetAll()
 	if err != nil {
 		fmt.Printf("Error accessing Firestore: %v\n", err)

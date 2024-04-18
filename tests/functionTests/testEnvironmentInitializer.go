@@ -44,10 +44,10 @@ func SetupFirestoreDatabase(collectionPath string) {
 		}
 	}
 
-	if collectionPath == resources.REGISTRATIONS_PATH {
+	if collectionPath == resources.RegistrationsPath {
 		firestoreEmulator.PopulateFirestoreWithRegistrations()
 	}
-	if collectionPath == resources.WEBHOOK_COLLECTION {
+	if collectionPath == resources.WebhookCollection {
 		firestoreEmulator.PopulateFirestoreWithWebhooks()
 	} else {
 		log.Println("Wrong path has been passed as parameter")

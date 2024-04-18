@@ -217,25 +217,25 @@ func Test_RegistrationRequestDELETE(t *testing.T) {
 		{
 			name:         "Delete one registration",
 			method:       http.MethodDelete,
-			path:         resources.REGISTRATIONS_PATH + "3",
+			path:         resources.RegistrationsPath + "3",
 			expectedCode: http.StatusNoContent,
 		},
 		{
 			name:         "Delete multiple registrations",
 			method:       http.MethodDelete,
-			path:         resources.REGISTRATIONS_PATH + "1,2,3",
+			path:         resources.RegistrationsPath + "1,2,3",
 			expectedCode: http.StatusNoContent,
 		},
 		{
 			name:         "Trying to delete an registration that is not registered",
 			method:       http.MethodDelete,
-			path:         resources.REGISTRATIONS_PATH + "6",
+			path:         resources.RegistrationsPath + "6",
 			expectedCode: http.StatusNotFound,
 		},
 		{
 			name:         "No id given",
 			method:       http.MethodDelete,
-			path:         resources.REGISTRATIONS_PATH + "",
+			path:         resources.RegistrationsPath + "",
 			expectedCode: http.StatusBadRequest,
 		},
 		// Add more test cases as needed
@@ -302,28 +302,28 @@ func Test_RegistrationRequestGET(t *testing.T) {
 		{
 			name:         "Get all registrations",
 			method:       http.MethodGet,
-			path:         resources.REGISTRATIONS_PATH,
+			path:         resources.RegistrationsPath,
 			expectedBody: allRegistrations,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "Get one registration",
 			method:       http.MethodGet,
-			path:         resources.REGISTRATIONS_PATH + "3",
+			path:         resources.RegistrationsPath + "3",
 			expectedBody: singleRegistration,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "Get invalid registration",
 			method:       http.MethodGet,
-			path:         resources.REGISTRATIONS_PATH + "5",
+			path:         resources.RegistrationsPath + "5",
 			expectedBody: "",
 			expectedCode: http.StatusNotFound,
 		},
 		{
 			name:         "Get multiple individual registrations",
 			method:       http.MethodGet,
-			path:         resources.REGISTRATIONS_PATH + "1,2",
+			path:         resources.RegistrationsPath + "1,2",
 			expectedBody: twoRegistrations,
 			expectedCode: http.StatusOK,
 		},
@@ -405,8 +405,8 @@ func Test_RegistrationRequestPOST(t *testing.T) {
 		var receivedPostRequestBody map[string]interface{}
 		if err := json.NewDecoder(r.Body).Decode(&receivedPostRequestBody); err != nil {
 			w.WriteHeader(http.StatusForbidden)
-			t.Fatalf(fmt.Sprintf(resources.DECODING_ERROR+"of the POST request. Use this structure for your"+
-				" POST request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT))
+			t.Fatalf(fmt.Sprintf(resources.DecodingError+"of the POST request. Use this structure for your"+
+				" POST request instead: \n%s", resources.JsonStructPostAndPut))
 		}
 
 		if reflect.DeepEqual(receivedPostRequestBody, postRequestBody) {
@@ -432,7 +432,7 @@ func Test_RegistrationRequestPOST(t *testing.T) {
 		{
 			name:         "Add a new registration",
 			method:       http.MethodPost,
-			path:         resources.REGISTRATIONS_PATH,
+			path:         resources.RegistrationsPath,
 			payload:      postRequestBodyBytes,
 			expectedBody: postResponseBody,
 			expectedCode: http.StatusCreated,
@@ -440,7 +440,7 @@ func Test_RegistrationRequestPOST(t *testing.T) {
 		{
 			name:         "Wrong request format",
 			method:       http.MethodPost,
-			path:         resources.REGISTRATIONS_PATH,
+			path:         resources.RegistrationsPath,
 			payload:      invalidRequestBodyBytes,
 			expectedBody: invalidResponse,
 			expectedCode: http.StatusForbidden},
@@ -512,8 +512,8 @@ func Test_RegistrationRequestPUT(t *testing.T) {
 		var receivedPutRequestBody map[string]interface{}
 		if err := json.NewDecoder(r.Body).Decode(&receivedPutRequestBody); err != nil {
 			w.WriteHeader(http.StatusForbidden)
-			t.Fatalf(fmt.Sprintf(resources.DECODING_ERROR+"of the PUT request. Use this structure for your"+
-				" PUT request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT))
+			t.Fatalf(fmt.Sprintf(resources.DecodingError+"of the PUT request. Use this structure for your"+
+				" PUT request instead: \n%s", resources.JsonStructPostAndPut))
 		}
 
 		if id == "" {
@@ -541,21 +541,21 @@ func Test_RegistrationRequestPUT(t *testing.T) {
 		{
 			name:         "Update a registration with valid request body",
 			method:       http.MethodPut,
-			path:         resources.REGISTRATIONS_PATH + "4",
+			path:         resources.RegistrationsPath + "4",
 			payload:      putRequestBodyBytes,
 			expectedCode: http.StatusOK,
 		},
 		{
 			name:         "Wrong request format",
 			method:       http.MethodPut,
-			path:         resources.REGISTRATIONS_PATH + "4",
+			path:         resources.RegistrationsPath + "4",
 			payload:      invalidRequestBodyBytes,
 			expectedCode: http.StatusForbidden,
 		},
 		{
 			name:         "No id specified",
 			method:       http.MethodPut,
-			path:         resources.REGISTRATIONS_PATH + "",
+			path:         resources.RegistrationsPath + "",
 			payload:      invalidRequestBodyBytes,
 			expectedCode: http.StatusBadRequest,
 		},

@@ -34,7 +34,7 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		webhookRequestDELETE(w, r)
 	default:
-		http.Error(w, "Method "+r.Method+" not supported for "+resources.NOTIFICATIONS_PATH, http.StatusMethodNotAllowed)
+		http.Error(w, "Method "+r.Method+" not supported for "+resources.NotificationsPath, http.StatusMethodNotAllowed)
 	}
 }
 

@@ -194,14 +194,14 @@ func TestGetAllRegisteredDocuments(t *testing.T) {
 		var _ *firestore.WriteResult
 		var err1 error
 		if tt.invalidTest {
-			docs, err2 := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Documents(emulatorCtx).GetAll()
+			docs, err2 := emulatorClient.Collection(resources.RegistrationsCollection).Documents(emulatorCtx).GetAll()
 			if err2 != nil {
 				log.Println("Failed to retrieve documents: ", err2.Error())
 				return
 			}
 
 			if len(docs) < 3 {
-				newDocumentRef, _, err1 = emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
+				newDocumentRef, _, err1 = emulatorClient.Collection(resources.RegistrationsCollection).
 					Add(emulatorCtx, invalidDocument3)
 				if err1 != nil {
 					log.Printf("An error occurred when creating a new document: %v", err1.Error())
@@ -224,7 +224,7 @@ func TestGetAllRegisteredDocuments(t *testing.T) {
 		})
 
 		if tt.invalidTest {
-			_, err := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).
+			_, err := emulatorClient.Collection(resources.RegistrationsCollection).
 				Doc(newDocumentRef.ID).Delete(emulatorCtx)
 			if err != nil {
 				log.Printf("Failed to delete the document: %v", err.Error())
@@ -304,7 +304,7 @@ func Test_CreateRegistrationsResponse(t *testing.T) {
 func Test_UpdateId(t *testing.T) {
 	SetupFirestoreDatabase()
 	firstDocumentID := ""
-	docRef := emulatorClient.Collection(resources.REGISTRATIONS_COLLECTION).Limit(1)
+	docRef := emulatorClient.Collection(resources.RegistrationsCollection).Limit(1)
 	docs, err := docRef.Documents(emulatorCtx).GetAll()
 	if err != nil {
 		log.Println("Failed to retrieve documents: ", err.Error())

@@ -24,7 +24,7 @@ func GenerateID() string {
 // It takes a context, Firestore client, the ID of the webhook to add and a struct of type WebhookPOST.
 // It returns a log of successful addition of webhook and an error.
 func AddWebhook(ctx context.Context, client *firestore.Client, webhookID string, data resources.WebhookPOST) error {
-	ref := client.Collection(resources.WEBHOOK_COLLECTION)
+	ref := client.Collection(resources.WebhookCollection)
 
 	// Create a new document with a unique ID
 	_, _, err3 := ref.Add(ctx, map[string]interface{}{
@@ -44,7 +44,7 @@ func AddWebhook(ctx context.Context, client *firestore.Client, webhookID string,
 // It returns a log of successful deletion of webhook or an error.
 func DeleteWebhook(ctx context.Context, client *firestore.Client, structID string) (*resources.WebhookPOSTResponse, error) {
 	// Reference the webhooks collection in firestore and query document with corresponding id
-	ref := client.Collection(resources.WEBHOOK_COLLECTION)
+	ref := client.Collection(resources.WebhookCollection)
 	query := ref.Where("ID", "==", structID).Limit(1)
 
 	// Get all documents matching the query
@@ -73,7 +73,7 @@ func DeleteWebhook(ctx context.Context, client *firestore.Client, structID strin
 // It returns an array of webhooks, or an error if not found or any other error occurs.
 func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.WebhookGET, error) {
 	// Iterate over documents in ascending order of lastChange timestamp.
-	iter := client.Collection(resources.WEBHOOK_COLLECTION).Documents(ctx)
+	iter := client.Collection(resources.WebhookCollection).Documents(ctx)
 	var webhookResponses []resources.WebhookGET
 	idIndex := 1
 
@@ -108,7 +108,7 @@ func GetAllWebhooks(ctx context.Context, client *firestore.Client) ([]resources.
 // It returns the webhook data if found, or an error if not found or any other error occurs.
 func GetWebhook(ctx context.Context, client *firestore.Client, webhookID string) (*resources.WebhookGET, error) {
 	// Make reference to webhook collection in firestore database and query doc with specified id
-	ref := client.Collection(resources.WEBHOOK_COLLECTION)
+	ref := client.Collection(resources.WebhookCollection)
 	query := ref.Where("ID", "==", webhookID).Limit(1)
 
 	// Retrieve documents matching query

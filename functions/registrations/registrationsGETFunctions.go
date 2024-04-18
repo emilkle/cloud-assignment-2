@@ -21,7 +21,7 @@ func CreateRegistrationsGET(ctx context.Context, client *firestore.Client, idPar
 	}
 
 	// Query Firestore for documents with matching ID.
-	query := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==", idNumber).Limit(1)
+	query := client.Collection(resources.RegistrationsCollection).Where("id", "==", idNumber).Limit(1)
 	documents, err2 := query.Documents(ctx).GetAll()
 	if err2 != nil {
 		log.Println("Failed to fetch documents:", err2)
@@ -89,7 +89,7 @@ func GetTargetCurrencies(featuresData map[string]interface{}) []string {
 // It constructs RegistrationsGET structs for each document and returns them along with an error, if any.
 func GetAllRegisteredDocuments(ctx context.Context, client *firestore.Client) ([]resources.RegistrationsGET, error) {
 	// Iterate over documents in ascending order of lastChange timestamp.
-	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).OrderBy("lastChange", firestore.Asc).Documents(ctx)
+	iter := client.Collection(resources.RegistrationsCollection).OrderBy("lastChange", firestore.Asc).Documents(ctx)
 	var registrationsResponses []resources.RegistrationsGET
 	idIndex := 1
 
@@ -154,7 +154,7 @@ func UpdateId(ctx context.Context, client *firestore.Client,
 	documentID string, getResponse resources.RegistrationsGET) {
 
 	// Update the document's id field.
-	_, err := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentID).Set(ctx,
+	_, err := client.Collection(resources.RegistrationsCollection).Doc(documentID).Set(ctx,
 		map[string]interface{}{"id": getResponse.Id}, firestore.MergeAll)
 
 	if err != nil {

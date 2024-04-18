@@ -111,8 +111,8 @@ func RegistrationRequestPOST(w http.ResponseWriter, r *http.Request) {
 	if err1 != nil {
 		// Respond with decoding error if unable to decode request.
 		log.Println("Unable to parse the POST request body: ", err1.Error())
-		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the POST request. Use this structure for your"+
-			" POST request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusForbidden)
+		http.Error(w, fmt.Sprintf(resources.DecodingError+"of the POST request. Use this structure for your"+
+			" POST request instead: \n%s", resources.JsonStructPostAndPut), http.StatusForbidden)
 		return
 	}
 
@@ -165,8 +165,8 @@ func RegistrationRequestPUT(w http.ResponseWriter, r *http.Request) {
 	if err1 != nil {
 		// Respond with decoding error if unable to decode request body.
 		log.Println("Unable to parse the PUT request body: ", err1.Error())
-		http.Error(w, fmt.Sprintf(resources.DECODING_ERROR+"of the PUT request. Use this structure for your"+
-			" PUT request instead: \n%s", resources.JSON_STRUCT_POST_AND_PUT), http.StatusForbidden)
+		http.Error(w, fmt.Sprintf(resources.DecodingError+"of the PUT request. Use this structure for your"+
+			" PUT request instead: \n%s", resources.JsonStructPostAndPut), http.StatusForbidden)
 		return
 	}
 
@@ -231,7 +231,7 @@ func standardResponseWriter(w http.ResponseWriter, response any) {
 	jsonData, err1 := json.Marshal(response)
 	if err1 != nil {
 		log.Println("Unable to encode the registration data: ", err1.Error())
-		http.Error(w, resources.ENCODING_ERROR+"of the registrations data.", http.StatusInternalServerError)
+		http.Error(w, resources.EncodingError+"of the registrations data.", http.StatusInternalServerError)
 		return
 	}
 

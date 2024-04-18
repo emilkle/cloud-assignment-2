@@ -17,7 +17,7 @@ func RetrieveCurrencyExchangeRates(id int, runTest bool) (resources.TargetCurren
 	fetching := "exchange rates"
 
 	// Construct URL
-	var urlPath = resources.CURRENCY_PATH + "NOK"
+	var urlPath = resources.CurrencyPath + "NOK"
 	url := ConstructUrlForApiOrTest(urlPath, TestUrlRetrieveCurrencyExchangeRates, runTest)
 
 	// Make HTTP request to specified URL

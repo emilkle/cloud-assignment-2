@@ -22,7 +22,7 @@ func TestAddWebhook(t *testing.T) {
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
 	emulatorCtx = firestoreEmulator.GetEmulatorContext()
 
-	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+	iter := emulatorClient.Collection(resources.WebhookCollection).Documents(emulatorCtx)
 
 	for {
 		doc, err1 := iter.Next()
@@ -83,7 +83,7 @@ func TestDeleteWebhook(t *testing.T) {
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
 	emulatorCtx = firestoreEmulator.GetEmulatorContext()
 
-	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+	iter := emulatorClient.Collection(resources.WebhookCollection).Documents(emulatorCtx)
 
 	for {
 		doc, err1 := iter.Next()
@@ -175,7 +175,7 @@ func TestGetAllWebhooks(t *testing.T) {
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
 	emulatorCtx = firestoreEmulator.GetEmulatorContext()
 
-	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+	iter := emulatorClient.Collection(resources.WebhookCollection).Documents(emulatorCtx)
 
 	for {
 		doc, err1 := iter.Next()
@@ -225,7 +225,7 @@ func TestGetWebhook(t *testing.T) {
 	emulatorClient = firestoreEmulator.GetEmulatorClient()
 	emulatorCtx = firestoreEmulator.GetEmulatorContext()
 
-	iter := emulatorClient.Collection(resources.WEBHOOK_COLLECTION).Documents(emulatorCtx)
+	iter := emulatorClient.Collection(resources.WebhookCollection).Documents(emulatorCtx)
 
 	for {
 		doc, err1 := iter.Next()

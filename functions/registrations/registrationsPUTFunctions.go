@@ -24,7 +24,7 @@ func GetDocumentID(ctx context.Context, client *firestore.Client,
 	}
 
 	// Query Firestore for documents with matching ID.
-	iter := client.Collection(resources.REGISTRATIONS_COLLECTION).Where("id", "==",
+	iter := client.Collection(resources.RegistrationsCollection).Where("id", "==",
 		requestedIdInt).Documents(ctx)
 
 	// Iterate through query results.
@@ -60,7 +60,7 @@ func CreatePUTRequest(ctx context.Context, client *firestore.Client, w http.Resp
 	if err != nil {
 		log.Println("The document has incorrect datatypes:", err.Error())
 		http.Error(w, "The input datatypes or document structure is incorrect. Please use the following"+
-			"format to update a document: "+resources.JSON_STRUCT_POST_AND_PUT, http.StatusForbidden)
+			"format to update a document: "+resources.JsonStructPostAndPut, http.StatusForbidden)
 	} else {
 		putRegistration := map[string]interface{}{
 			"country": data.Country,
@@ -78,7 +78,7 @@ func CreatePUTRequest(ctx context.Context, client *firestore.Client, w http.Resp
 		}
 
 		// Update the document in Firestore.
-		_, err3 := client.Collection(resources.REGISTRATIONS_COLLECTION).Doc(documentID).Set(ctx,
+		_, err3 := client.Collection(resources.RegistrationsCollection).Doc(documentID).Set(ctx,
 			putRegistration, firestore.MergeAll)
 
 		if err3 != nil {

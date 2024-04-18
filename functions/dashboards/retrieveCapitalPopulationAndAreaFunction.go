@@ -17,7 +17,7 @@ func RetrieveCapitalPopulationAndArea(isoCode string, id int, runTest bool) (res
 	fetching := "capital, population and area"
 
 	// Construct URL
-	var urlPath = fmt.Sprintf(resources.REST_COUNTRIES_PATH+"/alpha/%s", isoCode)
+	var urlPath = fmt.Sprintf(resources.RestCountriesPath+"/alpha/%s", isoCode)
 	url := ConstructUrlForApiOrTest(urlPath, TestUrlRetrieveCapitalPopulationAndArea, runTest)
 
 	// Make HTTP request to specified URL
