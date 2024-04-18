@@ -62,7 +62,7 @@ var testFeaturesData = map[string]interface{}{
 	"population":       true,
 	"precipitation":    true,
 	"temperature":      true,
-	"targetCurrencies": []interface{}{"EUR", "USD", "SEK"}, // Ensure this matches expected type
+	"targetCurrencies": []interface{}{"EUR", "USD", "SEK"},
 }
 
 var testTargetCurrencyValues = resources.TargetCurrencyValues{
@@ -142,6 +142,7 @@ func gotDocumentData(docs []*firestore.DocumentSnapshot) []map[string]interface{
 	return results
 }
 
+// TestRetrieveDashboardGet tests the RetrieveDashboardGet function
 func TestRetrieveDashboardGet(t *testing.T) {
 	firestoreEmulator.InitializeFirestoreEmulator()
 	firestoreEmulator.PopulateFirestoreWithRegistrations()
@@ -239,6 +240,7 @@ func TestRetrieveDashboardGet(t *testing.T) {
 	}
 }
 
+// TestRetrieveTargetCurrenciesAndExchangeRates tests the RetrieveTargetCurrenciesAndExchangeRates function
 func TestRetrieveTargetCurrenciesAndExchangeRates(t *testing.T) {
 	testServerCurrencyExchange := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mockJSONResponse := `{
@@ -286,6 +288,7 @@ func TestRetrieveTargetCurrenciesAndExchangeRates(t *testing.T) {
 	}
 }
 
+// TestCalculateMeanTemperatureAndPrecipitation tests the CalculateMeanTemperatureAndPrecipitation function
 func TestCalculateMeanTemperatureAndPrecipitation(t *testing.T) {
 	type args struct {
 		tempAndPrecip resources.HourlyData

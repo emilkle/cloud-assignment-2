@@ -106,7 +106,7 @@ func RetrieveDashboardGet(client *firestore.Client, ctx context.Context, dashboa
 		}
 	}
 
-	//Exchange rates are always shown in a dashboard
+	// Exchange rates are always shown in a dashboard
 	selectedExchangeRates, err = RetrieveTargetCurrenciesAndExchangeRates(featuresData, idNumber, runTest)
 	if err != nil {
 		return resources.DashboardsGet{}, err
