@@ -542,6 +542,7 @@ In order to run tests for the Countries Dashboard Service, a locally emulated Fi
      firebase emulators:start --only firestore --project countries-dashboard-service
      ```
    - Access the Web UI via the link provided in the terminal output: `http://127.0.0.1:4000/firestore/data`
+   - Link: [Emulator UI](http://127.0.0.1:4000/firestore/data)
 
 7. **Testing with Emulated Firestore**:
     - With the emulator running, you can now run tests to verify functionality of functions without affecting the production database.
