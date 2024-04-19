@@ -1,4 +1,4 @@
-FROM golang:1.18
+FROM golang:1.22
 
 LABEL authors="Marius Robsham Dahl, Kristian Welle Glomset, Emil Klevgård-Slåttsveen"
 
@@ -15,5 +15,6 @@ COPY ./go.mod /go/src/app/go.mod
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o main
 
 EXPOSE 8080
+EXPOSE 8081
 
 CMD ["./main"]
