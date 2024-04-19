@@ -238,7 +238,6 @@ func WebhookTrigger(httpMethod string, w http.ResponseWriter, r *http.Request) {
 	// Return error if no matching webhooks are found
 	if matchingWebhooks == nil {
 		log.Println("No matching webhook found for URL: ", urlFromRequest)
-		http.Error(w, "No matching webhook found", http.StatusNotFound)
 		return
 	}
 
