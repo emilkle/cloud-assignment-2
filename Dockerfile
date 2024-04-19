@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.20
 
 LABEL authors="Marius Robsham Dahl, Kristian Welle Glomset, Emil Klevgård-Slåttsveen"
 
